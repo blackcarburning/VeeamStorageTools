@@ -96,6 +96,12 @@
     written. In normal text mode this is the same human-readable report used by
     the Unison analysis flow. In -Json mode this is the JSON array.
 
+.PARAMETER StructuredOutputPath
+    Optional file path where a structured JSON copy of the collection should be
+    written for StorageTools processing. This includes metadata, summary counts,
+    sessions, defined job rows, repository rows, capacity-tier utilisation, and
+    raw baseline sections.
+
 .EXAMPLE
     .\Veeam_Storage_Collector.ps1
 
@@ -242,7 +248,10 @@ param(
     [string]$DebugLogPath = '',
 
     # Optional file path for the canonical collector output.
-    [string]$OutputPath = ''
+    [string]$OutputPath = '',
+
+    # Optional file path for structured StorageTools JSON.
+    [string]$StructuredOutputPath = ''
 )
 
 Set-StrictMode -Version Latest
@@ -4830,6 +4839,95 @@ function Write-CollectorOutputPath {
     }
 }
 
+function Write-StructuredOutputPath {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)] [object]$Data)
+
+    if ([string]::IsNullOrWhiteSpace($StructuredOutputPath)) { return '' }
+
+    try {
+        $fullPath = [IO.Path]::GetFullPath($StructuredOutputPath)
+        $parent = [IO.Path]::GetDirectoryName($fullPath)
+        if ($parent -and -not (Test-Path -LiteralPath $parent)) {
+            $null = New-Item -ItemType Directory -Path $parent -Force
+        }
+
+        $jsonBody = ConvertTo-Json -InputObject $Data -Depth 12
+        [System.IO.File]::WriteAllText($fullPath, $jsonBody, [System.Text.Encoding]::UTF8)
+        Write-ProgressMessage ('Structured collector JSON written to: {0}' -f $fullPath)
+        return $fullPath
+    } catch {
+        Write-Warning ('Unable to write structured collector JSON to "{0}": {1}' -f $StructuredOutputPath, $_.Exception.Message)
+        Write-DebugMessage ('[Write-StructuredOutputPath] Failure:' + [Environment]::NewLine + (Format-ErrorRecord -ErrorRecord $_))
+        return ''
+    }
+}
+
+function New-CollectorStructuredReport {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)] [AllowEmptyCollection()] [object[]]$Reports,
+        [Parameter(Mandatory)] [int]$TotalJobs,
+        [Parameter(Mandatory)] [int]$FailedCount,
+        [Parameter(Mandatory)] [int]$WarnCount,
+        [Parameter(Mandatory)] [int]$SuccessCount,
+        [Parameter(Mandatory)] [int]$WithError,
+        [object[]]$DefinedJobs = @(),
+        [object[]]$DefinedRepositories = @(),
+        [AllowNull()] [object]$CapacityTier = $null,
+        [string]$LicensingSection = '',
+        [string]$BackupVersionsSection = '',
+        [string]$SobrOffloadStatsSection = ''
+    )
+
+    $ed = if ($PSVersionTable.PSEdition) { $PSVersionTable.PSEdition } else { 'Desktop' }
+    $repositoryRows = foreach ($row in @($DefinedRepositories)) {
+        [pscustomobject][ordered]@{
+            Repository = $row.Repository
+            Tier       = $row.Tier
+            Parent     = $row.Parent
+            Status     = $row.Status
+            Total      = $row.Total
+            Used       = $row.Used
+            Free       = $row.Free
+            'Used %'   = $row.'Used %'
+        }
+    }
+
+    return [pscustomobject][ordered]@{
+        format = 'VeeamStorageTools-CollectorReport'
+        format_version = 2
+        metadata = [pscustomobject][ordered]@{
+            generated_at = (Get-Date).ToString('o')
+            window = [pscustomobject][ordered]@{
+                hours = $Hours
+                start = $script:StartTime.ToString('o')
+                end = $script:EndTime.ToString('o')
+            }
+            host = Get-CollectorHostName
+            powershell = ('{0} {1}' -f $ed, $PSVersionTable.PSVersion)
+            only_failures = [bool]$OnlyFailures
+            collector_debug = [bool]$CollectorDebug
+        }
+        summary = [pscustomobject][ordered]@{
+            jobs = $TotalJobs
+            failed = $FailedCount
+            warning = $WarnCount
+            success = $SuccessCount
+            with_error = $WithError
+        }
+        sessions = @($Reports)
+        defined_jobs = @($DefinedJobs)
+        repositories = @($repositoryRows)
+        capacity_tier = $CapacityTier
+        raw_sections = [pscustomobject][ordered]@{
+            licensing = $LicensingSection
+            backup_versions = $BackupVersionsSection
+            sobr_offload_stats = $SobrOffloadStatsSection
+        }
+    }
+}
+
 # ===========================================================================
 # Main
 # ===========================================================================
@@ -4870,6 +4968,7 @@ $capacityTierUtilisationSection = ''
 $licensingSection = ''
 $backupVersionsSection = ''
 $sobrOffloadStatsSection = ''
+$capacityTierUtilisationSnapshot = $null
 if (-not $Json) {
     Write-DebugMessage '[Main] Building Defined Jobs baseline section.'
     try {
@@ -5483,6 +5582,41 @@ if ($Json) {
 
 if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
     $null = Write-CollectorOutputPath -Body $collectorOutput
+}
+
+if (-not [string]::IsNullOrWhiteSpace($StructuredOutputPath)) {
+    $structuredDefinedJobs = @()
+    $structuredRepositories = @()
+    try {
+        $structuredDefinedJobs = @(Get-DefinedJobsReport)
+    } catch {
+        Write-Warning ('Structured Defined Jobs collection failed: {0}' -f $_.Exception.Message)
+        Write-DebugMessage ('[Main] Structured Defined Jobs failed:' + [Environment]::NewLine + (Format-ErrorRecord -ErrorRecord $_))
+    }
+    try {
+        $structuredRepositories = @(Get-DefinedRepositoryReport)
+    } catch {
+        Write-Warning ('Structured repository collection failed: {0}' -f $_.Exception.Message)
+        Write-DebugMessage ('[Main] Structured repository collection failed:' + [Environment]::NewLine + (Format-ErrorRecord -ErrorRecord $_))
+    }
+    if ($null -eq $capacityTierUtilisationSnapshot) {
+        try {
+            $capacityTierUtilisationSnapshot = New-CapacityTierUtilisationSnapshot
+        } catch {
+            Write-Warning ('Structured capacity-tier collection failed: {0}' -f $_.Exception.Message)
+            Write-DebugMessage ('[Main] Structured capacity-tier collection failed:' + [Environment]::NewLine + (Format-ErrorRecord -ErrorRecord $_))
+            $capacityTierUtilisationSnapshot = $null
+        }
+    }
+
+    $structuredReport = New-CollectorStructuredReport -Reports $sorted `
+        -TotalJobs $totalJobs -FailedCount $failedCount -WarnCount $warnCount `
+        -SuccessCount $successCount -WithError $withError `
+        -DefinedJobs $structuredDefinedJobs -DefinedRepositories $structuredRepositories `
+        -CapacityTier $capacityTierUtilisationSnapshot `
+        -LicensingSection $licensingSection -BackupVersionsSection $backupVersionsSection `
+        -SobrOffloadStatsSection $sobrOffloadStatsSection
+    $null = Write-StructuredOutputPath -Data $structuredReport
 }
 
 Write-DebugMessage '[Main] Script completed successfully.'

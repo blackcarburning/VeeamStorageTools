@@ -15,16 +15,21 @@ The workflow mirrors the StorageTools web helper:
 
 ## What the CMD Collects
 
-The generated CMD embeds `collector/Veeam_Storage_Collector.ps1` as a readable
-PowerShell section, writes it to a temporary working directory, runs it, and
-packages these files:
+The generated CMD embeds `collector/Veeam_Storage_Collector.ps1` and
+`collector/Veeam_Inventory_Collector.ps1` as readable PowerShell sections,
+writes them to a temporary working directory, runs them, and packages these
+files:
 
 - `veeam_collector_report.txt` - canonical human-readable collector report.
+- `veeam_collector_report.json` - structured collector report for browser import.
+- `veeam_inventory.json` - VBR configuration inventory for browser import.
 - `veeam_collector_console.log` - progress and console output.
 - `veeam_collector_errors.log` - warnings/errors from the collector process.
 - `veeam_collector_debug.log` - optional, only when debug is enabled.
 - `manifest.txt` - customer/label/window/source metadata.
 - `Veeam_Storage_Collector.ps1` - exact collector source used for the run.
+- `Veeam_Inventory_Collector.ps1` - exact inventory collector source used for
+  the run.
 
 The PowerShell collector is a collection-focused fork of
 `blackcarburning/Veeam_Log_Collector` at commit
@@ -41,6 +46,8 @@ other mail-side effects have been removed.
   content used by the existing Unison Veeam analysis flow.
 - Spreadsheet generation happens locally in the browser. No archive data is sent
   to a server by the web page.
+- The browser prefers `veeam_collector_report.json` and `veeam_inventory.json`
+  when present, and falls back to parsing the older human-readable text report.
 
 ## Maintenance
 
