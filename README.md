@@ -2,6 +2,8 @@
 
 Self-contained browser helper for Veeam Backup & Replication inventory reports.
 
+Current version: `0.2.0`
+
 ## Workflow
 
 1. Open `index.html` in a modern browser.
@@ -25,5 +27,16 @@ Collector SHA256 from the supplied attachment:
 
 - The browser app is static and has no backend.
 - JSON import and DOCX generation happen locally in the browser.
-- The report structure mirrors the supplied `veeam_report.py` output: title page, environment overview, executive summary, infrastructure, credentials, jobs, retention/GFS, Linux components, warnings, audit extract, and appendix.
+- The report structure follows the supplied `unison_report.docx` layout: title page, environment overview, executive summary, infrastructure, credentials, jobs, retention/GFS, Linux components, warnings, reporting, and appendix.
+- Scale-out backup repository output includes the performance extent and capacity extent columns from the source JSON.
+- The Import JSON page includes a debug panel and Copy Debug button to expose browser support, file read status, JSON parse status, and top-level JSON section shapes.
 - DOCX output is generated directly by `index.html`; Python and `python-docx` are no longer required for report creation.
+
+## Changelog
+
+### 0.2.0
+
+- Added visible app version badge.
+- Added import debug logging for JSON file reads and parse failures.
+- Updated DOCX report section names and table columns to match the original Word report more closely.
+- Added SOBR capacity extent reporting.
