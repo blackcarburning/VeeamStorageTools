@@ -1,42 +1,38 @@
 # VeeamStorageTools
 
-Self-contained browser helper for Veeam Backup & Replication inventory reports.
+Self-contained browser helper for Veeam Backup & Replication job configuration reports.
 
-Current version: `0.2.0`
+Current version: `0.3.0`
 
 ## Workflow
 
-1. Open `index.html` in a modern browser.
-2. Enter the VBR server name, audit window, output directory, and JSON filename.
+1. Open `index.html` in a modern browser or use the OpenClaw dashboard route.
+2. Enter the customer name, optional Veeam job filter, output directory, and output text filename.
 3. Download the generated Windows `.cmd` file.
-4. Run the `.cmd` on a Windows host with PowerShell 7 and the Veeam Backup PowerShell module installed.
-5. Import the generated `veeam_inventory.json` file back into `index.html`.
-6. Download the generated `.docx` inventory report.
+4. Run the `.cmd` on the Veeam Backup & Replication server.
+5. Import the generated `veeam_job_report.txt` output back into the browser page.
+6. Review the parsed jobs and download the generated `.docx` report.
 
 ## Collector
 
-The generated CMD embeds the supplied working PowerShell collector unchanged as `veeam_inv_json.ps1` and runs it with the configured parameters.
+The generated CMD embeds the supplied working `job_query_veeam_13_ps7.ps1` collector as readable PowerShell text. The collector is written to disk and run with the configured `-JobName` value. It collects per-job repository, retention, schedule, GFS, tags, includes, and excludes from the human-readable text output.
 
-Collector SHA256 from the supplied attachment:
+## Report
 
-```text
-5e642a100cece55a7057323fdf6a589a2823a263df0ba3fbeea6c87391461156
-```
+The DOCX is generated locally in the browser. It includes:
+
+- Executive summary
+- Backup jobs
+- Schedule details
+- Retention and GFS settings
+- Scope includes/excludes
+- Repository summary
+- Raw collector output appendix
+
+All generated Word tables are left justified and use fixed-width landscape layout to avoid flowing off the right side of the page.
 
 ## Notes
 
-- The browser app is static and has no backend.
-- JSON import and DOCX generation happen locally in the browser.
-- The report structure follows the supplied `unison_report.docx` layout: title page, environment overview, executive summary, infrastructure, credentials, jobs, retention/GFS, Linux components, warnings, reporting, and appendix.
-- Scale-out backup repository output includes the performance extent and capacity extent columns from the source JSON.
-- The Import JSON page includes a debug panel and Copy Debug button to expose browser support, file read status, JSON parse status, and top-level JSON section shapes.
-- DOCX output is generated directly by `index.html`; Python and `python-docx` are no longer required for report creation.
-
-## Changelog
-
-### 0.2.0
-
-- Added visible app version badge.
-- Added import debug logging for JSON file reads and parse failures.
-- Updated DOCX report section names and table columns to match the original Word report more closely.
-- Added SOBR capacity extent reporting.
+- The app is static and has no backend.
+- Text import and DOCX generation happen locally in the browser.
+- Python, `python-docx`, XLSX generation, and the older JSON inventory flow are no longer required.

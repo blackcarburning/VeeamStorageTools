@@ -1,166 +1,563 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>VeeamStorageTools - Veeam Inventory Report Helper</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Veeam Job Report Builder</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;font-size:14px;background:#eef2f7;color:#1a1a2e}
-a{color:#2e75b6}
-header{background:#1a3a5c;color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
-header .logo{font-size:22px;font-weight:700;letter-spacing:0}
-header .sub{font-size:12px;color:#9ecef8;margin-top:2px}
-nav{background:#fff;border-bottom:2px solid #2e75b6;display:flex;padding:0 20px;gap:2px;overflow-x:auto}
-nav button{padding:11px 18px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:500;color:#555;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .15s,border-color .15s}
-nav button:hover{color:#2e75b6}
-nav button.active{color:#2e75b6;border-bottom-color:#2e75b6}
-main{max-width:1200px;margin:0 auto;padding:20px}
-.tab{display:none}.tab.active{display:block}
-.card{background:#fff;border-radius:8px;padding:22px;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
-.card h2{font-size:15px;color:#1a3a5c;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #e8edf2;display:flex;align-items:center;gap:8px}
-.card h3{font-size:13px;color:#374151;margin:14px 0 8px;font-weight:600}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:680px){.form-grid{grid-template-columns:1fr}}
-.fg{display:flex;flex-direction:column;gap:4px}.fg.full{grid-column:1/-1}
-label{font-size:12px;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:.4px}
-input[type=text],input[type=number]{padding:8px 10px;border:1px solid #d1d5db;border-radius:5px;font-size:13px;font-family:inherit;width:100%}
-input[type=text]:focus,input[type=number]:focus{outline:2px solid #2e75b6;border-color:#2e75b6}
-.check-row{display:flex;align-items:center;gap:8px;min-height:34px;color:#374151}
-.hint{font-size:11px;color:#6b7280;margin-top:2px;line-height:1.4}
-.btn{padding:9px 18px;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:background .15s,opacity .15s}
-.btn:disabled{opacity:.5;cursor:default}
-.btn-primary{background:#2e75b6;color:#fff}.btn-primary:not(:disabled):hover{background:#1a5a96}
-.btn-success{background:#198754;color:#fff}.btn-success:not(:disabled):hover{background:#146c43}
-.btn-gray{background:#6b7280;color:#fff}.btn-gray:not(:disabled):hover{background:#4b5563}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
-.alert{padding:11px 14px;border-radius:6px;margin-bottom:14px;font-size:13px;line-height:1.55}
-.alert-warn{background:#fef3c7;border:1px solid #fde68a;color:#78350f}
-.alert-danger{background:#fee2e2;border:1px solid #fca5a5;color:#7f1d1d}
-.alert-info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a5f}
-.alert-success{background:#f0fdf4;border:1px solid #86efac;color:#14532d}
-.alert strong{font-weight:600}
-.tbl-wrap{overflow-x:auto;border-radius:6px;border:1px solid #e5e7eb;margin-top:10px}
-table{width:100%;border-collapse:collapse;font-size:12.5px}
-thead th{background:#1a3a5c;color:#fff;padding:8px 10px;text-align:left;font-weight:600;white-space:nowrap}
-tbody td{padding:6px 10px;border-bottom:1px solid #f1f1f1;vertical-align:top}
-tbody tr:last-child td{border-bottom:none}tbody tr:hover td{background:#f9fafb}
-.drop-zone{border:2px dashed #d1d5db;border-radius:8px;padding:28px 20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:#fafafa}
-.drop-zone:hover,.drop-zone.drag-over{border-color:#2e75b6;background:#eff6ff}
-.drop-zone p{color:#6b7280;font-size:13px;margin-bottom:6px}
-code,pre{background:#f3f4f6;border-radius:4px;font-family:Consolas,'Courier New',monospace;font-size:12px}
-code{padding:1px 5px}pre{padding:12px;overflow-x:auto;line-height:1.5;max-height:260px}
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px}
-.stat-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px;text-align:center}
-.stat-num{font-size:24px;font-weight:700;color:#1a3a5c}
-.stat-lbl{font-size:11px;color:#6b7280;margin-top:2px}
-.version-badge{margin-left:auto;background:#dbeafe;color:#1e3a5f;border:1px solid #93c5fd;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap}
-.debug-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:10px}
-.debug-pill{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:12px;color:#374151}
-.debug-pill strong{display:block;color:#1a3a5c;margin-bottom:2px}
-footer{text-align:center;padding:14px;font-size:12px;color:#9ca3af;margin-top:8px}
-#statusBar{position:fixed;bottom:0;left:0;right:0;background:#1a3a5c;color:#fff;padding:7px 16px;font-size:13px;display:none;z-index:100}
+:root{
+  --bg:#0b0f17;
+  --panel:#111827;
+  --panel2:#0f172a;
+  --line:rgba(148,163,184,.24);
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --blue:#60a5fa;
+  --green:#22c55e;
+  --red:#ef4444;
+  --amber:#f59e0b;
+  --radius:8px;
+  --sans:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+}
+*{box-sizing:border-box}
+html{color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.45}
+header{max-width:1240px;margin:0 auto;padding:22px 18px 12px;display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border-bottom:1px solid var(--line)}
+h1{font-size:22px;line-height:1.1;margin:0;letter-spacing:0}
+.sub{margin:7px 0 0;color:var(--muted);font-size:13px;max-width:760px}
+.version{border:1px solid rgba(96,165,250,.45);background:rgba(96,165,250,.10);color:#bfdbfe;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+main{max-width:1240px;margin:0 auto;padding:16px 18px 34px;display:grid;grid-template-columns:370px minmax(0,1fr);gap:14px}
+@media(max-width:980px){main{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}}
+.panel,.jobCard,.empty{background:rgba(17,24,39,.78);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 10px 28px rgba(0,0,0,.28)}
+.panel{overflow:hidden}.panel h2{margin:0;padding:13px 14px 9px;font-size:14px;border-bottom:1px solid var(--line)}
+.content{padding:14px}.stack{display:grid;gap:10px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}
+@media(max-width:520px){.two{grid-template-columns:1fr}}
+label{display:block;margin:0 0 4px;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+input[type="text"],textarea{width:100%;border:1px solid var(--line);border-radius:6px;background:rgba(15,23,42,.72);color:var(--text);font:13px var(--sans);outline:none}
+input[type="text"]{padding:9px 10px}textarea{min-height:260px;padding:11px 12px;font:12px/1.35 var(--mono);resize:vertical}
+input[type="file"]{width:100%;font-size:12px;color:var(--muted)}
+button{border:1px solid var(--line);background:rgba(15,23,42,.55);color:var(--text);border-radius:6px;padding:9px 11px;font-size:13px;cursor:pointer;transition:background .15s,border-color .15s,transform .05s;white-space:nowrap}
+button:hover{border-color:rgba(96,165,250,.55);background:rgba(96,165,250,.12)}button:active{transform:translateY(1px)}button.primary{background:#1d4ed8;border-color:#2563eb}button.primary:hover{background:#2563eb}button.good{background:#15803d;border-color:#16a34a}button.good:hover{background:#16a34a}button:disabled{opacity:.5;cursor:not-allowed}
+.note{border:1px solid rgba(96,165,250,.28);background:rgba(96,165,250,.09);border-radius:6px;padding:10px 11px;color:#dbeafe;font-size:12.5px}.warn{border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.10);color:#fde68a}.status{display:none;margin-top:10px;border-radius:6px;padding:9px 10px;font-size:12.5px}.status.show{display:block}.status.ok{border:1px solid rgba(34,197,94,.35);background:rgba(34,197,94,.10);color:#bbf7d0}.status.bad{border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.10);color:#fecaca}
+.summary{border-top:1px solid var(--line);padding-top:12px;display:grid;gap:8px}.stat{display:flex;justify-content:space-between;gap:12px;font-size:13px}.muted{color:var(--muted)}.chips{display:flex;flex-wrap:wrap;gap:7px}.chip,.badge,.pill{border:1px solid var(--line);background:rgba(2,6,23,.24);border-radius:999px;padding:5px 8px;font-size:12px;color:var(--text);max-width:100%;overflow-wrap:anywhere}.chip.none,.badge.none,.pill.none{opacity:.72}.badge.primary{border-color:rgba(96,165,250,.48);background:rgba(96,165,250,.10)}.pill.good{border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.10)}.pill.warn{border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.10)}
+.jobList{display:grid;gap:12px;min-width:0}.jobCard{overflow:hidden}.jobHead{padding:14px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:1px solid var(--line);background:rgba(96,165,250,.05)}.jobTitle{min-width:0;display:grid;gap:7px}.name{font-weight:800;font-size:16px;overflow-wrap:anywhere}.badges{display:flex;gap:7px;flex-wrap:wrap}.jobBody{display:grid;grid-template-columns:1.15fr 1fr;gap:12px;padding:14px}@media(max-width:980px){.jobBody{grid-template-columns:1fr}}.miniCard{border:1px solid var(--line);background:rgba(2,6,23,.20);border-radius:8px;padding:12px;min-width:0}.miniCard h3{margin:0 0 10px;font-size:13px}.kv{display:grid;grid-template-columns:116px minmax(0,1fr);gap:6px 10px;font-size:12px}.kv .k{color:var(--muted)}.kv .v{overflow-wrap:anywhere}.gfsGrid{display:grid;gap:8px}.gfsRow{border:1px solid rgba(148,163,184,.16);background:rgba(15,23,42,.35);border-radius:6px;padding:9px}.gfsHead{display:flex;justify-content:space-between;gap:8px;margin-bottom:7px;font-weight:700;font-size:12px}.scope{grid-column:1/-1}details{padding:0 14px 14px}summary{cursor:pointer;color:var(--muted);padding:10px 0;list-style:none}summary::-webkit-details-marker{display:none}pre{margin:0;border:1px solid var(--line);border-radius:6px;background:rgba(15,23,42,.72);padding:11px;font:12px/1.35 var(--mono);white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto}.empty{padding:30px;text-align:center;color:var(--muted)}footer{max-width:1240px;margin:0 auto;padding:0 18px 18px;color:var(--muted);font-size:12px}
 </style>
 </head>
 <body>
-<header><div class="logo">VeeamStorageTools</div><div><div style="font-size:15px;font-weight:600">Veeam Backup &amp; Replication Inventory Report Helper</div><div class="sub">Generates a Windows CMD collector - imports JSON - builds DOCX reports locally</div></div><div id="versionBadge" class="version-badge">v0.2.0</div></header>
-<nav><button id="btn-setup" class="active" onclick="showTab('setup')">1 - Setup</button><button id="btn-generate" onclick="showTab('generate')">2 - Generate CMD</button><button id="btn-import" onclick="showTab('import')">3 - Import JSON</button><button id="btn-report" onclick="showTab('report')">4 - DOCX Report</button></nav>
+<header>
+  <div>
+    <h1>Veeam Job Report Builder</h1>
+    <p class="sub">Generate the CMD wrapper, import the PowerShell text output, review repository/retention/schedule/GFS/scope, and create the DOCX report locally in the browser.</p>
+  </div>
+  <div class="version">v0.3.0</div>
+</header>
 <main>
-<div id="tab-setup" class="tab active"><div class="card"><h2>Collection Configuration</h2><div class="form-grid"><div class="fg"><label>Customer Name</label><input type="text" id="customerName" placeholder="UNISON"><span class="hint">Used for the generated report filename and cover metadata.</span></div><div class="fg"><label>VBR Server</label><input type="text" id="serverName" value="localhost"><span class="hint">Passed to the collector's <code>-Server</code> parameter.</span></div><div class="fg"><label>Audit Days</label><input type="number" id="auditDays" min="1" max="3650" value="90"><span class="hint">Passed to <code>-AuditDays</code> unless audit capture is skipped.</span></div><div class="fg"><label>Windows Output Directory</label><input type="text" id="outputDir" value="VeeamInventory_Output"><span class="hint">Relative paths resolve from the folder where the CMD is run.</span></div><div class="fg"><label>Output JSON Filename</label><input type="text" id="jsonName" value="veeam_inventory.json"><span class="hint">The CMD writes this JSON file, then you import it here.</span></div><div class="fg"><label>Audit Capture</label><div class="check-row"><input type="checkbox" id="skipAudit"><span>Skip audit export</span></div></div></div><div class="actions"><button class="btn btn-primary" onclick="saveConfig()">Save to Browser</button><button class="btn btn-gray" onclick="loadConfig()">Reload Saved</button></div><div id="configStatus" class="alert alert-success" style="display:none"></div></div><div class="alert alert-info"><strong>Workflow:</strong> download the CMD, run it on the Veeam Backup &amp; Replication server, import the generated JSON, then download the DOCX report.</div></div>
-<div id="tab-generate" class="tab"><div class="alert alert-warn"><strong>Run location:</strong> the CMD must run on a Windows host with PowerShell 7 and the Veeam Backup PowerShell module available. The embedded collector is the attached working PowerShell script; its collection logic is not modified by this page.</div><div class="card"><h2>Generate Collection CMD</h2><p style="color:#555;margin-bottom:12px;font-size:13px">The downloaded CMD writes <code>veeam_inv_json.ps1</code> beside the run output, executes it, and leaves the JSON ready for import.</p><div class="stat-grid"><div class="stat-box"><div class="stat-num">CMD</div><div class="stat-lbl">Windows collector wrapper</div></div><div class="stat-box"><div class="stat-num">JSON</div><div class="stat-lbl">Collector output</div></div><div class="stat-box"><div class="stat-num">DOCX</div><div class="stat-lbl">Browser report</div></div></div><div class="actions"><button class="btn btn-primary" onclick="downloadCmd()">Download CMD</button></div><h3>Embedded Collector Hash</h3><pre id="collectorHash"></pre></div></div>
-<div id="tab-import" class="tab"><div class="card"><h2>Import Inventory JSON</h2><div id="dropZone" class="drop-zone" onclick="document.getElementById('fileInput').click()"><p>Select or drop the <code>veeam_inventory.json</code> file produced by the generated CMD.</p><p>The JSON is processed locally in this browser; it is not uploaded.</p><input type="file" id="fileInput" accept=".json,application/json" style="display:none" onchange="handleFile(this.files[0])"></div><div class="actions"><button class="btn btn-gray" onclick="clearImport()">Clear Import</button><button class="btn btn-gray" onclick="copyImportDebug()">Copy Debug</button></div><div id="importSummary" class="alert alert-info">No inventory JSON imported yet.</div></div><div class="card"><h2>Import Debug</h2><div id="debugStats" class="debug-grid"></div><pre id="importDebug">No import attempted yet.</pre></div><div class="card"><h2>Inventory Preview</h2><div id="importStats" class="stat-grid"></div><div id="previewTables"></div></div></div>
-<div id="tab-report" class="tab"><div class="card"><h2>Generate DOCX Report</h2><div id="reportStats" class="stat-grid"></div><div class="actions"><button class="btn btn-success" id="btnReport" onclick="downloadDocx()" disabled>Download DOCX Report</button></div><div id="reportStatus" class="alert alert-info" style="display:none"></div></div></div>
-</main><footer>VeeamStorageTools - collection wrapper and DOCX generation run locally.</footer><div id="statusBar"></div>
-<script>
-const COLLECTOR_SOURCE = "#requires -Version 7.0\n\nparam(\n    [string]$Server = \"localhost\",\n    [int]$AuditDays = 90,\n    [switch]$SkipAudit,\n    [string]$OutputFile = \".\\veeam_inventory.json\"\n)\n\nSet-StrictMode -Version Latest\n$ErrorActionPreference = \"Stop\"\n\nfunction Test-CmdletExists {\n    param([string]$Name)\n    return [bool](Get-Command -Name $Name -ErrorAction SilentlyContinue)\n}\n\nfunction Get-SafeValue {\n    param(\n        [scriptblock]$Expression,\n        $Default = $null\n    )\n    try {\n        & $Expression\n    }\n    catch {\n        $Default\n    }\n}\n\nfunction Convert-ForExport {\n    param(\n        [Parameter(ValueFromPipeline = $true)]\n        $InputObject\n    )\n    process {\n        if ($null -eq $InputObject) { return $null }\n\n        $props = [ordered]@{}\n        foreach ($p in $InputObject.PSObject.Properties) {\n            try {\n                $name = $p.Name\n                $value = $p.Value\n\n                if ($null -eq $value) {\n                    $props[$name] = $null\n                }\n                elseif ($value -is [string] -or\n                        $value -is [int] -or\n                        $value -is [long] -or\n                        $value -is [double] -or\n                        $value -is [decimal] -or\n                        $value -is [bool] -or\n                        $value -is [datetime] -or\n                        $value -is [guid] -or\n                        $value.GetType().IsEnum) {\n                    $props[$name] = $value\n                }\n                elseif ($value -is [System.Array] -or ($value -is [System.Collections.IEnumerable] -and $value -isnot [string])) {\n                    $items = @()\n                    foreach ($i in $value) {\n                        if ($null -eq $i) { continue }\n\n                        if ($i -is [string] -or $i -is [ValueType]) {\n                            $items += $i\n                        }\n                        elseif ($i.PSObject.Properties[\"Name\"]) {\n                            $items += $i.Name\n                        }\n                        else {\n                            $items += $i.ToString()\n                        }\n                    }\n                    $props[$name] = $items\n                }\n                else {\n                    if ($value.PSObject.Properties[\"Name\"]) {\n                        $props[$name] = $value.Name\n                    }\n                    else {\n                        $props[$name] = $value.ToString()\n                    }\n                }\n            }\n            catch {\n                $props[$p.Name] = \"<unavailable>\"\n            }\n        }\n\n        [pscustomobject]$props\n    }\n}\n\nfunction Get-FlatData {\n    param([object[]]$Data)\n\n    if ($null -eq $Data) { return @() }\n    if ($Data -isnot [System.Array]) { $Data = @($Data) }\n\n    return @($Data | Convert-ForExport)\n}\n\nif (-not (Get-Module -ListAvailable -Name Veeam.Backup.PowerShell)) {\n    throw \"Veeam.Backup.PowerShell module not found.\"\n}\n\nImport-Module Veeam.Backup.PowerShell -ErrorAction Stop\n\ntry {\n    $session = Get-VBRServerSession -ErrorAction SilentlyContinue\n}\ncatch {\n    $session = $null\n}\n\nif (-not $session) {\n    Connect-VBRServer -Server $Server | Out-Null\n}\n\n$inventory = [ordered]@{\n    Metadata = [ordered]@{\n        GeneratedAt  = (Get-Date).ToString(\"o\")\n        TargetServer = $Server\n        Hostname     = $env:COMPUTERNAME\n        User         = \"$env:USERDOMAIN\\$env:USERNAME\"\n        PSVersion    = $PSVersionTable.PSVersion.ToString()\n    }\n    BackupServerInfo        = @()\n    Servers                 = @()\n    Repositories            = @()\n    ScaleOutRepositories    = @()\n    ViProxies               = @()\n    HvProxies               = @()\n    CredentialsMetadataOnly = @()\n    Jobs                    = @()\n    ComputerBackupJobs      = @()\n    JobProxyMapping         = @()\n    BackupCopyJobs          = @()\n    SureBackupJobs          = @()\n    TapeJobs                = @()\n    RecentBackupSessions    = @()\n    LinuxPackages           = @()\n    AvailableVeeamCmdlets   = @()\n    Audit                   = $null\n    Warnings                = @()\n}\n\nif (Test-CmdletExists \"Get-VBRBackupServerInfo\") {\n    try {\n        $inventory.BackupServerInfo = Get-FlatData (Get-VBRBackupServerInfo)\n    }\n    catch {\n        $inventory.Warnings += \"BackupServerInfo: $($_.Exception.Message)\"\n    }\n}\n\nif (Test-CmdletExists \"Get-VBRServer\") {\n    try {\n        $inventory.Servers = Get-FlatData (Get-VBRServer)\n    }\n    catch {\n        $inventory.Warnings += \"Servers: $($_.Exception.Message)\"\n    }\n}\n\nif (Test-CmdletExists \"Get-VBRBackupRepository\") {\n    try {\n        $inventory.Repositories = Get-FlatData (Get-VBRBackupRepository)\n    }\n    catch {\n        $inventory.Warnings += \"Repositories: $($_.Exception.Message)\"\n    }\n\n    try {\n        $inventory.ScaleOutRepositories = Get-FlatData (Get-VBRBackupRepository -ScaleOut)\n    }\n    catch {\n        $inventory.Warnings += \"ScaleOutRepositories: $($_.Exception.Message)\"\n    }\n}\n\nif (Test-CmdletExists \"Get-VBRViProxy\") {\n    try {\n        $inventory.ViProxies = Get-FlatData (Get-VBRViProxy)\n    }\n    catch {\n        $inventory.Warnings += \"ViProxies: $($_.Exception.Message)\"\n    }\n}\n\nif (Test-CmdletExists \"Get-VBRHvProxy\") {\n    try {\n        $inventory.HvProxies = Get-FlatData (Get-VBRHvProxy)\n    }\n    catch {\n        $inventory.Warnings += \"HvProxies: $($_.Exception.Message)\"\n    }\n}\n\nif (Test-CmdletExists \"Get-VBRCredentials\") {\n    try {\n        $creds = Get-VBRCredentials\n        $inventory.CredentialsMetadataOnly = @(\n            foreach ($c in $creds) {\n                [pscustomobject]@{\n                    Name             = Get-SafeValue { $c.Name }\n                    Type             = Get-SafeValue { $c.Type }\n                    Description      = Get-SafeValue { $c.Description }\n                    Id               = Get-SafeValue { $c.Id }\n                    UserName         = Get-SafeValue { $c.UserName }\n                    Domain           = Get-SafeValue { $c.Domain }\n                    IsReadOnly       = Get-SafeValue { $c.IsReadOnly }\n                    CreationTime     = Get-SafeValue { $c.CreationTime }\n                    LastModifiedTime = Get-SafeValue { $c.LastModifiedTime }\n                }\n            }\n        )\n    }\n    catch {\n        $inventory.Warnings += \"CredentialsMetadataOnly: $($_.Exception.Message)\"\n    }\n}\n\n$jobs = @()\nif (Test-CmdletExists \"Get-VBRJob\") {\n    try {\n        $jobs = @(Get-VBRJob -WarningAction SilentlyContinue)\n        $inventory.Jobs = Get-FlatData $jobs\n    }\n    catch {\n        $inventory.Warnings += \"Jobs: $($_.Exception.Message)\"\n    }\n}\n\nif ($jobs.Count -gt 0 -and (Test-CmdletExists \"Get-VBRJobProxy\")) {\n    try {\n        $inventory.JobProxyMapping = @(\n            foreach ($j in $jobs) {\n                try {\n                    $src = @(Get-VBRJobProxy -Job $j -WarningAction SilentlyContinue -ErrorAction Stop)\n                    foreach ($p in $src) {\n                        [pscustomobject]@{\n                            JobName   = Get-SafeValue { $j.Name }\n                            JobType   = Get-SafeValue { $j.JobType }\n                            ProxyName = Get-SafeValue { $p.Name } -Default (Get-SafeValue { $p.ToString() })\n                            ProxyRole = \"Source\"\n                        }\n                    }\n\n                    $tgt = @(Get-VBRJobProxy -Job $j -Target -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)\n                    foreach ($p in $tgt) {\n                        [pscustomobject]@{\n                            JobName   = Get-SafeValue { $j.Name }\n                            JobType   = Get-SafeValue { $j.JobType }\n                            ProxyName = Get-SafeValue { $p.Name } -Default (Get-SafeValue { $p.ToString() })\n                            ProxyRole = \"Target\"\n                        }\n                    }\n                }\n                catch {\n                    [pscustomobject]@{\n                        JobName   = Get-SafeValue { $j.Name }\n                        JobType   = Get-SafeValue { $j.JobType }\n                        ProxyName = \"<lookup failed>\"\n                        ProxyRole = \"\"\n                    }\n                }\n            }\n        )\n    }\n    catch {\n        $inventory.Warnings += \"JobProxyMapping: $($_.Exception.Message)\"\n    }\n}\n\nif (Test-CmdletExists \"Get-VBRComputerBackupJob\") {\n    try {\n        $inventory.ComputerBackupJobs = Get-FlatData (Get-VBRComputerBackupJob)\n    }\n    catch {\n        $inventory.Warnings += \"ComputerBackupJobs: $($_.Exception.Message)\"\n    }\n}\n\nif (Test-CmdletExists \"Get-VBRBackupCopyJob\") {\n    try {\n        $inventory.BackupCopyJobs = Get-FlatData (Get-VBRBackupCopyJob)\n    }\n    catch {\n        $inventory.Warnings += \"BackupCopyJobs: $($_.Exception.Message)\"\n    }\n}\n\nif (Test-CmdletExists \"Get-VBRSureBackupJob\") {\n    try {\n        $inventory.SureBackupJobs = Get-FlatData (Get-VBRSureBackupJob)\n    }\n    catch {\n        $inventory.Warnings += \"SureBackupJobs: $($_.Exception.Message)\"\n    }\n}\n\nif (Test-CmdletExists \"Get-VBRTapeJob\") {\n    try {\n        $inventory.TapeJobs = Get-FlatData (Get-VBRTapeJob)\n    }\n    catch {\n        $inventory.Warnings += \"TapeJobs: $($_.Exception.Message)\"\n    }\n}\n\nif (Test-CmdletExists \"Get-VBRBackupSession\") {\n    try {\n        $inventory.RecentBackupSessions = Get-FlatData (\n            Get-VBRBackupSession | Sort-Object EndTime -Descending | Select-Object -First 200\n        )\n    }\n    catch {\n        $inventory.Warnings += \"RecentBackupSessions: $($_.Exception.Message)\"\n    }\n}\n\nif (Test-CmdletExists \"Get-VBRLinuxPackage\") {\n    try {\n        $inventory.LinuxPackages = Get-FlatData (Get-VBRLinuxPackage)\n    }\n    catch {\n        $inventory.Warnings += \"LinuxPackages: $($_.Exception.Message)\"\n    }\n}\n\ntry {\n    $inventory.AvailableVeeamCmdlets = Get-FlatData (\n        Get-Command -Module Veeam.Backup.PowerShell |\n        Sort-Object Name |\n        Select-Object Name, CommandType, Version, Source\n    )\n}\ncatch {\n    $inventory.Warnings += \"AvailableVeeamCmdlets: $($_.Exception.Message)\"\n}\n\nif (-not $SkipAudit -and (Test-CmdletExists \"Export-VBRAudit\")) {\n    try {\n        $maxAuditDate = [datetime]'2025-12-31T00:00:00'\n        $now = Get-Date\n        $to = if ($now -gt $maxAuditDate) { $maxAuditDate } else { $now }\n        $from = $to.AddDays(-1 * [math]::Abs($AuditDays))\n\n        $tmpAudit = Join-Path ([System.IO.Path]::GetTempPath()) (\"veeam_audit_{0}.txt\" -f [guid]::NewGuid().ToString(\"N\"))\n        Export-VBRAudit -From $from -To $to -FileFullPath $tmpAudit\n        $inventory.Audit = Get-Content -Path $tmpAudit -Raw -ErrorAction SilentlyContinue\n        Remove-Item -Path $tmpAudit -Force -ErrorAction SilentlyContinue\n    }\n    catch {\n        $inventory.Warnings += \"Audit: $($_.Exception.Message)\"\n    }\n}\n\n$json = $inventory | ConvertTo-Json -Depth 12\n$fullOutputPath = [System.IO.Path]::GetFullPath($OutputFile)\n$json | Set-Content -Path $fullOutputPath -Encoding UTF8\n\nWrite-Host \"\"\nWrite-Host \"JSON written to:\"\nWrite-Host \"  $fullOutputPath\"\nWrite-Host \"\"\n";
-const COLLECTOR_SHA256 = "5e642a100cece55a7057323fdf6a589a2823a263df0ba3fbeea6c87391461156";
-const APP_VERSION = "0.2.0";
-const APP_STORAGE_KEY = 'veeamInventoryReportHelperConfigV1';
-const STATE = { fileName:'', data:null, debug:[] };
-const EXCLUDED_COLUMN_NAMES = new Set(['id','objectid','instanceid','itemid','jobid','repoid','serverid','uid','guid','moid','ref','href','description','mounthostids']);
+  <aside class="panel">
+    <h2>Collector and Report</h2>
+    <div class="content stack">
+      <div class="two">
+        <div><label for="customerName">Customer name</label><input id="customerName" type="text" placeholder="UNISON"></div>
+        <div><label for="jobFilter">Job filter</label><input id="jobFilter" type="text" value="*"></div>
+        <div><label for="outputDir">Windows output directory</label><input id="outputDir" type="text" value="VeeamJobReport_Output"></div>
+        <div><label for="outputFile">Output text filename</label><input id="outputFile" type="text" value="veeam_job_report.txt"></div>
+      </div>
+      <div class="row">
+        <button id="downloadCmd" class="primary" type="button">Download CMD</button>
+        <button id="downloadDocx" class="good" type="button" disabled>Download DOCX</button>
+      </div>
+      <div class="note warn">Run the generated CMD on the Veeam Backup &amp; Replication server. It writes the supplied PowerShell collector to disk, runs it, and captures the text output for import here.</div>
+      <div><label>Collector SHA256</label><pre id="collectorHash" style="max-height:none"></pre></div>
+      <div id="cmdStatus" class="status"></div>
+    </div>
+  </aside>
 
-function showTab(id){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+id).classList.add('active');document.getElementById('btn-'+id).classList.add('active');}
-function showStatus(msg){const bar=document.getElementById('statusBar');bar.textContent=msg;bar.style.display='block';clearTimeout(showStatus.t);showStatus.t=setTimeout(()=>bar.style.display='none',3500);}
-function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function val(id){return document.getElementById(id).value.trim();}
-function chk(id){return document.getElementById(id).checked;}
-function setVal(id,v){document.getElementById(id).value=v??'';}
-function setChk(id,v){document.getElementById(id).checked=!!v;}
-function readConfig(){return{customerName:val('customerName'),serverName:val('serverName')||'localhost',auditDays:Math.min(3650,Math.max(1,parseInt(val('auditDays')||'90',10)||90)),outputDir:val('outputDir')||'VeeamInventory_Output',jsonName:safeJsonFilename(val('jsonName')||'veeam_inventory.json'),skipAudit:chk('skipAudit')};}
-function safeJsonFilename(name){let s=String(name||'veeam_inventory.json').replace(/[\\/:*?"<>|\r\n]/g,'_').trim();if(!s.toLowerCase().endsWith('.json'))s+='.json';return s||'veeam_inventory.json';}
-function safeLabel(v,fallback){const s=String(v||fallback||'VBR').replace(/[^A-Za-z0-9._-]/g,'_').replace(/_+/g,'_');return s||fallback;}
-function cmdSafe(v){return String(v??'').replace(/[\r\n]/g,' ').replace(/[&<>|^%"()]/g,'_');}
-function psOneLine(s){return '"' + s.replace(/"/g,'`"') + '"';}
-function saveConfig(){localStorage.setItem(APP_STORAGE_KEY,JSON.stringify(readConfig()));flashConfig('Configuration saved.');}
-function loadConfig(){const raw=localStorage.getItem(APP_STORAGE_KEY);if(!raw){flashConfig('No saved configuration found.','alert-info');return;}try{const c=JSON.parse(raw);setVal('customerName',c.customerName);setVal('serverName',c.serverName||'localhost');setVal('auditDays',c.auditDays||90);setVal('outputDir',c.outputDir||'VeeamInventory_Output');setVal('jsonName',c.jsonName||'veeam_inventory.json');setChk('skipAudit',c.skipAudit);flashConfig('Configuration loaded.');}catch{flashConfig('Saved configuration could not be read.','alert-danger');}}
-function flashConfig(msg,cls='alert-success'){const el=document.getElementById('configStatus');el.className='alert '+cls;el.textContent=msg;el.style.display='block';}
-function generateCmdContent(){const cfg=readConfig();const now=new Date().toISOString().slice(0,19).replace('T',' ')+' UTC';const start='@@VEEAM_INV_JSON_PS1_BEGIN@@',end='@@VEEAM_INV_JSON_PS1_END@@';const extract="$ErrorActionPreference='Stop';$self=$env:VST_SELF;$out=$env:VST_OUT;$start=$env:VST_START;$end=$env:VST_END;$text=[IO.File]::ReadAllText($self,[Text.Encoding]::UTF8);$s=$text.LastIndexOf($start);$e=if($s -ge 0){$text.IndexOf($end,$s)}else{-1};if($s -lt 0 -or $e -lt 0){throw 'Embedded collector markers not found'};$s+=$start.Length;if($s -lt $text.Length -and $text[$s] -eq [char]13){$s++};if($s -lt $text.Length -and $text[$s] -eq [char]10){$s++};$payload=$text.Substring($s,$e-$s).TrimEnd([char]13,[char]10);[IO.File]::WriteAllText($out,$payload,[Text.UTF8Encoding]::new($false))";const lines=[];lines.push('@echo off','SETLOCAL EnableExtensions','REM ================================================================','REM VeeamStorageTools - Veeam inventory JSON collection wrapper','REM Generated: '+now,'REM Collector SHA256: '+COLLECTOR_SHA256,'REM ================================================================','');lines.push('SET "SERVER='+cmdSafe(cfg.serverName)+'"','SET "AUDIT_DAYS='+cfg.auditDays+'"','SET "SKIP_AUDIT='+String(cfg.skipAudit)+'"','SET "OUTDIR_RAW='+cmdSafe(cfg.outputDir)+'"','SET "JSON_NAME='+cmdSafe(cfg.jsonName)+'"','SET "LAUNCH_DIR=%CD%"','SET "OUTDIR=%OUTDIR_RAW%"','IF NOT "%OUTDIR_RAW:~1,1%"==":" IF NOT "%OUTDIR_RAW:~0,2%"=="\\\\" SET "OUTDIR=%LAUNCH_DIR%\\%OUTDIR_RAW%"','IF NOT EXIST "%OUTDIR%" MKDIR "%OUTDIR%"','IF NOT EXIST "%OUTDIR%" (','  echo [FATAL] Unable to create output directory: %OUTDIR% 1>&2','  EXIT /B 1',')','');lines.push('SET "SELF=%~f0"','SET "PS1_FILE=%OUTDIR%\\veeam_inv_json.ps1"','SET "OUTPUT_JSON=%OUTDIR%\\%JSON_NAME%"','SET "CONSOLE_LOG=%OUTDIR%\\veeam_inventory_console.log"','SET "ERROR_LOG=%OUTDIR%\\veeam_inventory_errors.log"','','echo Writing embedded collector to %PS1_FILE% ...','SET "VST_SELF=%SELF%"','SET "VST_OUT=%PS1_FILE%"','SET "VST_START='+start+'"','SET "VST_END='+end+'"','powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command '+psOneLine(extract),'SET EXTRACT_RC=%ERRORLEVEL%','SET "VST_SELF="','SET "VST_OUT="','SET "VST_START="','SET "VST_END="','IF NOT %EXTRACT_RC%==0 (','  echo [FATAL] Unable to extract embedded collector source. 1>&2','  EXIT /B %EXTRACT_RC%',')','');lines.push('SET "PS_EXE=pwsh"','where pwsh >NUL 2>&1','IF NOT %ERRORLEVEL%==0 (','  echo [WARN] pwsh.exe was not found. Falling back to Windows PowerShell; the collector requires PowerShell 7. >> "%ERROR_LOG%"','  SET "PS_EXE=powershell"',')','SET "SKIP_FLAG="','IF /I "%SKIP_AUDIT%"=="true" SET "SKIP_FLAG=-SkipAudit"','echo Running collector with %PS_EXE% ...','"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -File "%PS1_FILE%" -Server "%SERVER%" -AuditDays %AUDIT_DAYS% %SKIP_FLAG% -OutputFile "%OUTPUT_JSON%" > "%CONSOLE_LOG%" 2> "%ERROR_LOG%"','SET RUN_RC=%ERRORLEVEL%','echo.','echo ================================================================','IF EXIST "%OUTPUT_JSON%" echo Inventory JSON: %OUTPUT_JSON%','IF NOT EXIST "%OUTPUT_JSON%" echo Inventory JSON was not created. Check %ERROR_LOG%','echo Console log   : %CONSOLE_LOG%','echo Error log     : %ERROR_LOG%','echo Exit code     : %RUN_RC%','echo ================================================================','ENDLOCAL & EXIT /B %RUN_RC%');return [lines.join('\r\n'),start,COLLECTOR_SOURCE.replace(/\n/g,'\r\n'),end,''].join('\r\n');}
-function downloadCmd(){const cfg=readConfig();const name='VeeamInventory_'+safeLabel(cfg.serverName,'VBR')+'.cmd';downloadBlob(new Blob([generateCmdContent()],{type:'text/plain'}),name);showStatus('Downloaded '+name);}
-function downloadBlob(blob,filename){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-function addDebug(msg,obj){const line=new Date().toISOString()+' | '+msg+(obj?' | '+safeStr(obj):'');STATE.debug.push(line);updateDebugPanel();}
-function summarizeTopLevel(data){const out={};Object.keys(data||{}).slice(0,80).forEach(k=>{const v=data[k];out[k]=Array.isArray(v)?'array('+v.length+')':(v&&typeof v==='object'?'object('+Object.keys(v).length+')':String(v==null?v:typeof v));});return out;}
-function updateDebugPanel(){const text=STATE.debug.length?STATE.debug.join('\n'):'No import attempted yet.';const el=document.getElementById('importDebug');if(el)el.textContent=text;const stats=document.getElementById('debugStats');if(stats){const data=STATE.data||{};stats.innerHTML=[['App Version',APP_VERSION],['File',STATE.fileName||'None'],['Browser',navigator.userAgent],['Top-level Keys',Object.keys(data).length||0]].map(([k,v])=>'<div class="debug-pill"><strong>'+escapeHtml(k)+'</strong>'+escapeHtml(v)+'</div>').join('');}}
-function copyImportDebug(){const text=(STATE.debug.length?STATE.debug.join('\n'):'No import attempted yet.');if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(()=>showStatus('Debug copied.')).catch(()=>window.prompt('Copy debug text',text));}else window.prompt('Copy debug text',text);}
-function handleFile(file){STATE.debug=[];STATE.data=null;STATE.fileName=file?file.name:'';addDebug('Import requested',{version:APP_VERSION,hasFile:!!file});if(!file){refreshImport();return;}addDebug('File selected',{name:file.name,size:file.size,type:file.type||'(blank)',lastModified:file.lastModified?new Date(file.lastModified).toISOString():'(unavailable)'});if(!window.FileReader){addDebug('FileReader unavailable');setImportMessage('This browser does not expose FileReader, so local JSON import cannot run. Try current Edge or Chrome on the Veeam server.','alert-danger');refreshImport();return;}const reader=new FileReader();reader.onerror=()=>{addDebug('FileReader error',{code:reader.error&&reader.error.code,message:reader.error&&reader.error.message});setImportMessage('JSON import failed while reading file. See Import Debug.','alert-danger');refreshImport();};reader.onload=e=>{try{const raw=String((e&&e.target&&e.target.result)||'');addDebug('File read complete',{characters:raw.length,first80:raw.slice(0,80)});const cleaned=raw.replace(/^\uFEFF/,'');const data=JSON.parse(cleaned);addDebug('JSON parse complete',{topLevelType:Array.isArray(data)?'array':typeof data,keys:Object.keys(data||{}).slice(0,40)});addDebug('Top-level summary',summarizeTopLevel(data));STATE.fileName=file.name;STATE.data=data;refreshImport();showTab('report');showStatus('Imported '+file.name);}catch(err){addDebug('JSON parse/import failed',{name:err.name,message:err.message,stack:err.stack});setImportMessage('JSON import failed: '+err.message+' (see Import Debug).','alert-danger');refreshImport();}};try{reader.readAsText(file,'utf-8');addDebug('FileReader.readAsText started');}catch(err){addDebug('FileReader start failed',{name:err.name,message:err.message});setImportMessage('JSON import failed before reading: '+err.message,'alert-danger');refreshImport();}}
-function clearImport(){STATE.fileName='';STATE.data=null;STATE.debug=[];refreshImport();updateDebugPanel();showStatus('Import cleared.');}
-function setImportMessage(msg,cls='alert-info'){const el=document.getElementById('importSummary');el.className='alert '+cls;el.textContent=msg;}
-function refreshImport(){const data=STATE.data;document.getElementById('btnReport').disabled=!data;if(!data){if(!STATE.debug.length)setImportMessage('No inventory JSON imported yet.');document.getElementById('importStats').innerHTML='';document.getElementById('previewTables').innerHTML='';document.getElementById('reportStats').innerHTML='';updateDebugPanel();return;}const meta=data.Metadata||{};setImportMessage('Imported '+STATE.fileName+' generated on '+(formatDatetimeString(meta.GeneratedAt)||'unknown date')+'.','alert-success');const summary=buildExecutiveSummary(data);document.getElementById('importStats').innerHTML=summary.slice(0,8).map(([k,v])=>statBox(v,k)).join('');document.getElementById('reportStats').innerHTML=summary.map(([k,v])=>statBox(v,k)).join('');document.getElementById('previewTables').innerHTML=renderPreview(data);updateDebugPanel();}
-function statBox(num,label){return '<div class="stat-box"><div class="stat-num">'+escapeHtml(num)+'</div><div class="stat-lbl">'+escapeHtml(label)+'</div></div>';}
-function renderPreview(data){const rows=[['Target Server',safeStr(data.Metadata&&data.Metadata.TargetServer)],['Host Name',safeStr(data.Metadata&&data.Metadata.Hostname)],['Generated',formatDatetimeString(data.Metadata&&data.Metadata.GeneratedAt)],['Backup Server Build',firstNonempty(firstRecord(data.BackupServerInfo),['Build','BuildNumber'])]];let html='<h3>Environment</h3>'+htmlTable(rows.map(r=>({Field:r[0],Value:r[1]})),['Field','Value']);const jobs=ensureListOfDicts(data.Jobs).slice(0,8),repos=ensureListOfDicts(data.Repositories).slice(0,8);html+='<h3>Backup Jobs Preview</h3>'+htmlTable(jobs,cleanColumns(jobs,['Name','JobType','Type','IsScheduleEnabled','LatestRunLocal']));html+='<h3>Repositories Preview</h3>'+htmlTable(repos,cleanColumns(repos,['Name','Type','Path','Host','Info']));return html;}
-function htmlTable(rows,cols){if(!rows.length)return '<p class="hint">No data found.</p>';return '<div class="tbl-wrap"><table><thead><tr>'+cols.map(c=>'<th>'+escapeHtml(c)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+cols.map(c=>'<td>'+escapeHtml(truncate(formatCellValue(c,row[c]),160))+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';}
-function safeStr(value){if(value==null)return '';if(Array.isArray(value))return value.filter(v=>v!=null).map(safeStr).join(', ');if(typeof value==='object'){try{return JSON.stringify(value);}catch{return String(value);}}return String(value);}
-function formatDatetimeString(value){const text=safeStr(value).trim();if(!text)return text;const d=new Date(text.replace('Z','+00:00'));if(!isNaN(d.getTime())){const mon=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return String(d.getDate()).padStart(2,'0')+' '+mon[d.getMonth()]+' '+d.getFullYear()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');}return text;}
-function isDatetimeColumn(col){const name=String(col||'').trim().toLowerCase();return name.includes('time')||name.includes('date')||name.includes('run')||name.endsWith('local');}
-function formatCellValue(col,value){const text=safeStr(value);return isDatetimeColumn(col)?formatDatetimeString(text):text;}
-function ensureListOfDicts(value){if(value==null)return [];if(Array.isArray(value))return value.map(item=>item&&typeof item==='object'&&!Array.isArray(item)?item:{Value:item});if(typeof value==='object')return [value];return value?[{Value:value}]:[];}
-function firstRecord(value){const rows=ensureListOfDicts(value);return rows[0]||{};}
-function countItems(data,key){const v=data?data[key]:null;if(v==null)return 0;if(Array.isArray(v))return v.length;if(typeof v==='object')return Object.keys(v).length?1:0;return v?1:0;}
-function firstNonempty(record,candidates){record=record||{};for(const key of candidates){const v=record[key];if(v!=null&&v!==''&&!(Array.isArray(v)&&!v.length)&&!(typeof v==='object'&&!Array.isArray(v)&&!Object.keys(v).length))return safeStr(v);}return '';}
-function isExcludedColumn(col){const normalized=String(col||'').trim().toLowerCase();return EXCLUDED_COLUMN_NAMES.has(normalized)||normalized.endsWith('id');}
-function cleanColumns(rows,preferred,maxCols=6){if(!rows.length)return [];const keys=[],seen=new Set();for(const col of preferred){if(isExcludedColumn(col))continue;if(rows.some(row=>row&&Object.prototype.hasOwnProperty.call(row,col))&&!seen.has(col)){keys.push(col);seen.add(col);}}for(const row of rows){if(!row||typeof row!=='object')continue;for(const key of Object.keys(row)){if(isExcludedColumn(key)||seen.has(key))continue;keys.push(key);seen.add(key);if(keys.length>=maxCols)return keys;}}if(keys.length)return keys.slice(0,maxCols);for(const row of rows){const fallback=Object.keys(row||{}).filter(k=>!isExcludedColumn(k));if(fallback.length)return fallback.slice(0,maxCols);}return ['Value'];}
-function truncate(s,max){s=safeStr(s);return s.length>max?s.slice(0,max-3)+'...':s;}
-function flattenSettingsRows(rows,settingsKey='Settings'){return rows.map(row=>{const base={},settings=row?row[settingsKey]:null;for(const [k,v] of Object.entries(row||{})){if(k!==settingsKey)base[k]=v;}if(settings&&typeof settings==='object'&&!Array.isArray(settings))return Object.assign(base,settings);if(settings!=null&&settings!==''&&!(Array.isArray(settings)&&!settings.length))base[settingsKey]=settings;return base;});}
-function buildExecutiveSummary(data){const warnings=Array.isArray(data.Warnings)?data.Warnings:(data.Warnings?[data.Warnings]:[]);return [['Managed Servers',countItems(data,'Servers')],['Repositories',countItems(data,'Repositories')],['Scale-Out Repositories',countItems(data,'ScaleOutRepositories')],['Repository Immutability Records',countItems(data,'RepositoryImmutability')],['VMware Proxies',countItems(data,'ViProxies')],['Hyper-V Proxies',countItems(data,'HvProxies')],['Credentials',countItems(data,'CredentialsMetadataOnly')],['Backup Jobs',countItems(data,'Jobs')],['Computer Backup Jobs',countItems(data,'ComputerBackupJobs')],['Backup Copy Jobs',countItems(data,'BackupCopyJobs')],['Retention Policy Records',countItems(data,'JobRetentionPolicies')],['GFS Setting Records',countItems(data,'JobGFSSettings')],['SureBackup Jobs',countItems(data,'SureBackupJobs')],['Tape Jobs',countItems(data,'TapeJobs')],['Linux Packages',countItems(data,'LinuxPackages')],['Warnings',warnings.length]].map(([k,v])=>[k,String(v)]);}
-function summarizeJobs(jobs){if(!jobs.length)return [['Jobs','No backup jobs found.']];let enabled=0;const names=[];for(const job of jobs){names.push(firstNonempty(job,['Name']));const e=firstNonempty(job,['IsScheduleEnabled','IsEnabled','Enabled']).toLowerCase();if(e==='true'||e==='yes')enabled++;}let preview=names.filter(Boolean).slice(0,6).join(', ');if(names.length>6)preview+=', ...';return [['Total Jobs',String(jobs.length)],['Likely Enabled',String(enabled)],['Examples',preview||'Not available']];}
-function x(s){return String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
-function wText(text,opts={}){let rpr='';if(opts.bold)rpr+='<w:b/>';if(opts.italic)rpr+='<w:i/>';if(opts.size)rpr+='<w:sz w:val="'+Math.round(opts.size*2)+'"/>';if(opts.color)rpr+='<w:color w:val="'+opts.color+'"/>';return '<w:r>'+(rpr?'<w:rPr>'+rpr+'</w:rPr>':'')+'<w:t xml:space="preserve">'+x(text)+'</w:t></w:r>';}
-function paragraph(text,opts={}){let ppr='';if(opts.align)ppr+='<w:jc w:val="'+opts.align+'"/>';if(opts.style)ppr+='<w:pStyle w:val="'+opts.style+'"/>';if(opts.before||opts.after)ppr+='<w:spacing w:before="'+(opts.before||0)+'" w:after="'+(opts.after||0)+'"/>';return '<w:p>'+(ppr?'<w:pPr>'+ppr+'</w:pPr>':'')+wText(text,opts)+'</w:p>';}
-function heading(text,level){return paragraph(text,{style:'Heading'+level,bold:true,size:level===1?12:10,before:level===1?180:120,after:80});}
+  <section class="panel">
+    <h2>Paste or Import Output</h2>
+    <div class="content stack">
+      <textarea id="input" spellcheck="false" placeholder="Paste veeam_job_report.txt output here..."></textarea>
+      <div class="row"><input id="fileInput" type="file" accept=".txt,.log,text/plain"><button id="loadSample" type="button">Load sample</button><button id="copyRaw" type="button">Copy raw</button><button id="clearAll" type="button">Clear</button></div>
+      <div><label for="search">Search</label><input id="search" type="text" placeholder="Search jobs, repos, includes/excludes..."></div>
+      <div class="summary">
+        <div class="stat"><span class="muted">Jobs</span><strong id="statJobs">0</strong></div>
+        <div class="stat"><span class="muted">Jobs with GFS</span><strong id="statGfs">0</strong></div>
+        <div class="stat"><span class="muted">Active schedules</span><strong id="statActive">0</strong></div>
+        <div><div class="muted" style="margin:8px 0 7px">Top repositories</div><div id="topRepos" class="chips"></div></div>
+      </div>
+      <div id="parseStatus" class="status"></div>
+    </div>
+  </section>
+
+  <section id="jobs" class="jobList full"></section>
+</main>
+<footer>Tables in the generated DOCX use fixed-width, left-justified layout so they stay inside the page. Tags are parsed but not shown in the main cards unless present in details.</footer>
+
+<script type="text/plain" id="collectorSource">
+[CmdletBinding()]
+param([string]$JobName='*')
+
+function Initialize-VeeamPowerShell {
+  if (Get-Module -ListAvailable -Name 'Veeam.Backup.PowerShell') {
+    if (-not (Get-Module -Name 'Veeam.Backup.PowerShell')) {
+      Import-Module 'Veeam.Backup.PowerShell' -ErrorAction Stop
+    }
+  } else {
+    if (-not (Get-PSSnapin -Name 'VeeamPSSnapin' -ErrorAction SilentlyContinue)) {
+      Add-PSSnapin 'VeeamPSSnapin' -ErrorAction Stop
+    }
+  }
+}
+
+function Get-Prop {
+  param($Obj, [string[]]$Names)
+  foreach ($n in $Names) {
+    if ($Obj -and ($Obj.PSObject.Properties.Name -contains $n)) {
+      $v = $Obj.$n
+      if ($null -ne $v -and "$v".Trim().Length -gt 0) { return $v }
+    }
+  }
+  $null
+}
+
+function As-ListOrNone {
+  param([object[]]$Items)
+  $arr = @($Items | Where-Object { $_ -and "$_".Trim().Length -gt 0 } | Sort-Object -Unique)
+  if ($arr.Count -eq 0) { return @('none') }
+  $arr
+}
+
+function Get-TagNamesFromJobObjects {
+  param([object[]]$JobObjects)
+  $tags = foreach ($o in $JobObjects) {
+    $loc = Get-Prop $o @('Location','Path','FullPath')
+    $nm  = Get-Prop $o @('Name')
+    if ($loc -and ($loc -match '(?i)\btag(s)?\b')) { $nm }
+  }
+  As-ListOrNone $tags
+}
+
+function Get-IncExc {
+  param($Job)
+  $objs = @(Get-VBRJobObject -Job $Job -ErrorAction SilentlyContinue)
+  $inc = @($objs | Where-Object { "$($_.Type)" -eq 'Include' } | ForEach-Object { $_.Name })
+  $exc = @($objs | Where-Object { "$($_.Type)" -eq 'Exclude' } | ForEach-Object { $_.Name })
+  [pscustomobject]@{
+    Objects  = $objs
+    Includes = As-ListOrNone $inc
+    Excludes = As-ListOrNone $exc
+    Tags     = Get-TagNamesFromJobObjects -JobObjects $objs
+  }
+}
+
+function Describe-SimpleProps {
+  param(
+    [Parameter(Mandatory)]$Obj,
+    [string[]]$Prefer = @()
+  )
+  if (-not $Obj) { return 'none' }
+
+  $props = @()
+
+  foreach ($p in $Prefer) {
+    if ($Obj.PSObject.Properties.Name -contains $p) {
+      $v = $Obj.$p
+      if ($null -ne $v -and "$v".Trim().Length -gt 0) {
+        $props += ("{0}={1}" -f $p, $v)
+      }
+    }
+  }
+
+  foreach ($p in $Obj.PSObject.Properties) {
+    if ($Prefer -contains $p.Name) { continue }
+    $v = $p.Value
+    if ($null -eq $v) { continue }
+
+    $isSimple =
+      ($v -is [string]) -or
+      ($v -is [bool])   -or
+      ($v -is [int])    -or
+      ($v -is [long])   -or
+      ($v -is [double]) -or
+      ($v -is [datetime]) -or
+      ($v.GetType().IsEnum)
+
+    if ($isSimple) {
+      $s = "$v".Trim()
+      if ($s.Length -gt 0) {
+        $props += ("{0}={1}" -f $p.Name, $s)
+      }
+    }
+  }
+
+  if ($props.Count -eq 0) { return 'none' }
+  return ($props | Sort-Object) -join '; '
+}
+
+# ---- GFS logic: always use Get-VBRJobOptions.GfsPolicy ----
+function Get-GfsBlock {
+  param([Parameter(Mandatory)]$JobOptions)
+
+  $gfs = Get-Prop $JobOptions @('GfsPolicy','GFS','Gfs','GfsOptions')
+  if (-not $gfs) {
+    $bso = Get-Prop $JobOptions @('BackupStorageOptions','StorageOptions')
+    if ($bso) { $gfs = Get-Prop $bso @('GfsPolicy','GFS','Gfs','GfsOptions') }
+  }
+
+  if (-not $gfs) {
+    return [pscustomobject]@{ Weekly='none'; Monthly='none'; Yearly='none' }
+  }
+
+  $weekly  = Get-Prop $gfs @('Weekly')
+  $monthly = Get-Prop $gfs @('Monthly')
+  $yearly  = Get-Prop $gfs @('Yearly')
+
+  $wDesc = if ($weekly)  { Describe-SimpleProps -Obj $weekly  -Prefer @('DesiredTime','IsEnabled','KeepBackupsForNumberOfWeeks','RetentionPeriod','SelectedDay','SelectedWeek') } else { 'none' }
+  $mDesc = if ($monthly) { Describe-SimpleProps -Obj $monthly -Prefer @('DesiredTime','IsEnabled','KeepBackupsForNumberOfMonths','RetentionPeriod','SelectedDay','SelectedWeek','SelectedDayOfMonth') } else { 'none' }
+  $yDesc = if ($yearly)  { Describe-SimpleProps -Obj $yearly  -Prefer @('DesiredTime','IsEnabled','KeepBackupsForNumberOfYears','RetentionPeriod','SelectedMonth','SelectedDay','SelectedWeek','SelectedDayOfMonth') } else { 'none' }
+
+  if ($weekly  -and ($weekly.PSObject.Properties.Name  -contains 'IsEnabled') -and (-not $weekly.IsEnabled))   { $wDesc = 'none' }
+  if ($monthly -and ($monthly.PSObject.Properties.Name -contains 'IsEnabled') -and (-not $monthly.IsEnabled)) { $mDesc = 'none' }
+  if ($yearly  -and ($yearly.PSObject.Properties.Name  -contains 'IsEnabled') -and (-not $yearly.IsEnabled))  { $yDesc = 'none' }
+
+  [pscustomobject]@{ Weekly=$wDesc; Monthly=$mDesc; Yearly=$yDesc }
+}
+
+# ---- Retention: job-configured retention (RetentionType-aware) ----
+function Get-RetentionText {
+  param([Parameter(Mandatory)]$Job)
+
+  $o = $null
+  try { $o = $Job.GetOptions() } catch { $o = $null }
+  if (-not $o) { return 'none' }
+
+  # Backup Copy jobs (BackupSync): use GenerationPolicy
+  if ($Job.JobType -eq 'BackupSync') {
+    $gp = Get-Prop $o @('GenerationPolicy')
+    if ($gp) {
+      $rp = Get-Prop $gp @('SimpleRetentionRestorePoints','RestorePointsToKeep','RetainCycles','RetentionCycles')
+      if ($rp) { return ("{0} restore points" -f $rp) }
+    }
+    return 'none'
+  }
+
+  $bso = Get-Prop $o @('BackupStorageOptions','StorageOptions')
+  if (-not $bso) { return 'none' }
+
+  $rtype = Get-Prop $bso @('RetentionType')
+  $rtypeS = if ($rtype) { "$rtype" } else { '' }
+
+  if ($rtypeS -match '(?i)^days$') {
+    $d = Get-Prop $bso @('RetainDaysToKeep','RetainDays')
+    if ($d) { return ("{0} days" -f $d) }
+    # fallback to cycles if days not available
+    $c = Get-Prop $bso @('RetainCycles','RetentionCycles','RestorePointsToKeep','RestorePoints')
+    if ($c) { return ("{0} restore points" -f $c) }
+    return 'none'
+  }
+
+  # Non-days types: treat as restore points/cycles
+  $c2 = Get-Prop $bso @('RetainCycles','RetentionCycles','RestorePointsToKeep','RestorePoints')
+  if ($c2) { return ("{0} restore points" -f $c2) }
+
+  # last resort
+  $any = Get-Prop $bso @('RetainDaysToKeep','RetainDays','RetainCycles','RetentionCycles','RestorePointsToKeep','RestorePoints')
+  if ($any) { return "$any" }
+
+  'none'
+}
+
+function Get-RepoNameForJob {
+  param($Job)
+
+  if ($Job.JobType -eq 'BackupSync') {
+    try {
+      $r = $Job.GetTargetRepository()
+      if ($r -and $r.Name) { return "$($r.Name)" }
+    } catch {}
+    return 'none'
+  }
+
+  try {
+    if ($Job.PSObject.Methods.Name -contains 'FindTargetRepository') {
+      $r = $Job.FindTargetRepository()
+      if ($r -and $r.Name) { return "$($r.Name)" }
+    }
+  } catch {}
+
+  try {
+    $opt = $Job.GetOptions()
+    foreach ($containerName in @('JobOptions','Options','BackupStorageOptions')) {
+      if ($opt -and ($opt.PSObject.Properties.Name -contains $containerName)) {
+        $c = $opt.$containerName
+        if ($c) {
+          foreach ($p in $c.PSObject.Properties) {
+            if ($p.Name -match '(?i)repo') {
+              $v = $p.Value
+              if ($v -and ($v.PSObject.Properties.Name -contains 'Name') -and $v.Name) { return "$($v.Name)" }
+              if ($v -is [string] -and $v.Trim()) { return $v.Trim() }
+            }
+          }
+        }
+      }
+    }
+  } catch {}
+
+  'none'
+}
+
+# ---- Schedule: show Active=True/False (PS5 compatible) ----
+function Get-JobScheduleSummary {
+  param([Parameter(Mandatory)]$Job)
+
+  $so = $null
+  try { $so = $Job.ScheduleOptions } catch { $so = $null }
+  if (-not $so) { return 'none' }
+
+  $daily   = Get-Prop $so @('OptionsDaily')
+  $monthly = Get-Prop $so @('OptionsMonthly')
+  $period  = Get-Prop $so @('OptionsPeriodically')
+  $cont    = Get-Prop $so @('OptionsContinuous')
+
+  $mode = 'none'
+  $modeObj = $null
+
+  foreach ($pair in @(
+    @('Daily', $daily),
+    @('Monthly', $monthly),
+    @('Periodically', $period),
+    @('Continuous', $cont)
+  )) {
+    $name = $pair[0]; $obj = $pair[1]
+    if ($obj -and ($obj.PSObject.Properties.Name -contains 'Enabled') -and [bool]$obj.Enabled) {
+      $mode = $name
+      $modeObj = $obj
+      break
+    }
+  }
+
+  $active = ($mode -ne 'none')
+  $activeText = 'False'
+  if ($active) { $activeText = 'True' }
+
+  $parts = @()
+  $parts += ("Active={0}" -f $activeText)
+  $parts += ("Mode={0}" -f $mode)
+
+  $start = Get-Prop $so @('StartDateTimeLocal')
+  if ($start) { $parts += ("Start={0}" -f $start) }
+
+  if ($so.PSObject.Properties.Name -contains 'RetrySpecified' -and [bool]$so.RetrySpecified) {
+    $parts += ("RetryTimes={0}" -f $so.RetryTimes)
+    $parts += ("RetryTimeout={0}" -f $so.RetryTimeout)
+  }
+
+  if ($so.PSObject.Properties.Name -contains 'ResumeMissedBackup') {
+    $parts += ("ResumeMissed={0}" -f $so.ResumeMissedBackup)
+  }
+
+  if ($so.PSObject.Properties.Name -contains 'WaitForBackupCompletion') {
+    $parts += ("WaitForCompletion={0}" -f $so.WaitForBackupCompletion)
+  }
+
+  ($parts -join '; ')
+}
+
+# ---------------- MAIN ----------------
+Initialize-VeeamPowerShell
+
+$jobs = @(Get-VBRJob -Name $JobName | Sort-Object Name)
+if ($jobs.Count -eq 0) { Write-Host ("No jobs matched '{0}'." -f $JobName); return }
+
+foreach ($job in $jobs) {
+
+  $sc    = Get-IncExc -Job $job
+  $repo  = Get-RepoNameForJob -Job $job
+  $sched = Get-JobScheduleSummary -Job $job
+
+  $opts = $null
+  try { $opts = $job | Get-VBRJobOptions -ErrorAction Stop } catch { $opts = $null }
+
+  # Retention from job definition (RetentionType-aware)
+  $ret = Get-RetentionText -Job $job
+
+  $gfs = if ($opts) { Get-GfsBlock -JobOptions $opts } else { [pscustomobject]@{Weekly='none';Monthly='none';Yearly='none'} }
+
+  Write-Host ''
+  Write-Host ('=' * 100)
+  Write-Host ('Job:  {0}' -f $job.Name)
+  Write-Host ('Type: {0}' -f $job.JobType)
+  Write-Host ('=' * 100)
+
+  Write-Host ('Repository : {0}' -f $repo)
+  Write-Host ('Retention  : {0}' -f $ret)
+  Write-Host ('Schedule   : {0}' -f $sched)
+
+  Write-Host ''
+  Write-Host 'GFS:'
+  Write-Host ('  Weekly  : {0}' -f $gfs.Weekly)
+  Write-Host ('  Monthly : {0}' -f $gfs.Monthly)
+  Write-Host ('  Yearly  : {0}' -f $gfs.Yearly)
+
+  Write-Host ''
+  Write-Host 'Tags:'
+  foreach ($t in $sc.Tags) { Write-Host ('  - {0}' -f $t) }
+
+  Write-Host ''
+  Write-Host 'Includes:'
+  foreach ($i in $sc.Includes) { Write-Host ('  + {0}' -f $i) }
+
+  Write-Host ''
+  Write-Host 'Excludes:'
+  foreach ($e in $sc.Excludes) { Write-Host ('  - {0}' -f $e) }
+}
+</script>
+<script>
+(function(){
+'use strict';
+const APP_VERSION='0.3.0';
+const SAMPLE=`====================================================================================================
+Job:  SQL_Daily_Backup
+Type: Backup
+====================================================================================================
+Repository : SOBR_SQL_Repos
+Retention  : 7 days
+Schedule   : Active=True; Mode=Daily; Start=07/02/2026 02:00:00; RetryTimes=3; RetryTimeout=10; ResumeMissed=False; WaitForCompletion=True
+
+GFS:
+  Weekly  : DesiredTime=Sunday; IsEnabled=True; KeepBackupsForNumberOfWeeks=4
+  Monthly : DesiredTime=First; IsEnabled=True; KeepBackupsForNumberOfMonths=2
+  Yearly  : none
+
+Tags:
+  - none
+
+Includes:
+  + DC-VSQLTEST01
+
+Excludes:
+  - none
+
+====================================================================================================
+Job:  VMware_Daily_Backup
+Type: Backup
+====================================================================================================
+Repository : SOBR_VMware_Repos
+Retention  : 14 restore points
+Schedule   : Active=True; Mode=Daily; Start=05/02/2026 22:00:00; RetryTimes=3; RetryTimeout=10; ResumeMissed=False; WaitForCompletion=True
+
+GFS:
+  Weekly  : DesiredTime=Sunday; IsEnabled=True; KeepBackupsForNumberOfWeeks=4
+  Monthly : DesiredTime=First; IsEnabled=True; KeepBackupsForNumberOfMonths=2
+  Yearly  : none
+
+Tags:
+  - none
+
+Includes:
+  + Backup_VM
+
+Excludes:
+  - none
+`;
+const els={
+  input:document.getElementById('input'),search:document.getElementById('search'),jobs:document.getElementById('jobs'),
+  statJobs:document.getElementById('statJobs'),statGfs:document.getElementById('statGfs'),statActive:document.getElementById('statActive'),topRepos:document.getElementById('topRepos'),
+  fileInput:document.getElementById('fileInput'),downloadCmd:document.getElementById('downloadCmd'),downloadDocx:document.getElementById('downloadDocx'),loadSample:document.getElementById('loadSample'),copyRaw:document.getElementById('copyRaw'),clearAll:document.getElementById('clearAll'),
+  customerName:document.getElementById('customerName'),jobFilter:document.getElementById('jobFilter'),outputDir:document.getElementById('outputDir'),outputFile:document.getElementById('outputFile'),collectorHash:document.getElementById('collectorHash'),cmdStatus:document.getElementById('cmdStatus'),parseStatus:document.getElementById('parseStatus')
+};
+let parsedJobs=[];
+function collectorSource(){return document.getElementById('collectorSource').textContent.replace(/^\n/,'').replace(/\n$/,'');}
+function escapeHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
+function safeStr(v){if(v==null)return '';if(Array.isArray(v))return v.map(safeStr).filter(Boolean).join(', ');return String(v);}
+function normalizeLines(raw){return String(raw||'').replace(/\r/g,'').split('\n').map(l=>l.trimEnd());}
+function showStatus(el,msg,ok){el.textContent=msg;el.className='status show '+(ok?'ok':'bad');}
+function clearStatus(el){el.textContent='';el.className='status';}
+function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800);}
+function safeLabel(value,fallback){const s=String(value||'').trim().replace(/[^a-z0-9._-]+/gi,'_').replace(/^_+|_+$/g,'');return s||fallback;}
+function readConfig(){return{customerName:els.customerName.value.trim(),jobFilter:els.jobFilter.value.trim()||'*',outputDir:els.outputDir.value.trim()||'VeeamJobReport_Output',outputFile:els.outputFile.value.trim()||'veeam_job_report.txt'};}
+function batchValue(value){return String(value||'').replace(/[\r\n]/g,' ').replace(/"/g,'').replace(/%/g,'%%');}
+function psSingle(value){return String(value||'').replace(/'/g,"''");}
+async function sha256Hex(text){const data=new TextEncoder().encode(text);const hash=await crypto.subtle.digest('SHA-256',data);return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');}
+async function buildCmd(){const cfg=readConfig(),src=collectorSource(),hash=await sha256Hex(src);return `@echo off
+setlocal EnableExtensions
+set "OUT_DIR=${batchValue(cfg.outputDir)}"
+set "OUT_FILE=${batchValue(cfg.outputFile)}"
+set "JOB_FILTER=${batchValue(cfg.jobFilter)}"
+if not exist "%OUT_DIR%" mkdir "%OUT_DIR%"
+set "COLLECTOR=%OUT_DIR%\\job_query_veeam_13_ps7.ps1"
+set "REPORT=%OUT_DIR%\\%OUT_FILE%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $self='%~f0'; $dest='${psSingle(cfg.outputDir)}\\job_query_veeam_13_ps7.ps1'; $raw=[IO.File]::ReadAllText($self); $m=[regex]::Match($raw,'(?s)###BEGIN_COLLECTOR###\\r?\\n(.*?)\\r?\\n###END_COLLECTOR###'); if(-not $m.Success){throw 'Collector block not found in CMD'}; [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($dest)) | Out-Null; [IO.File]::WriteAllText($dest,$m.Groups[1].Value,(New-Object System.Text.UTF8Encoding($false)))"
+if errorlevel 1 goto :fail
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$actual=(Get-FileHash -Algorithm SHA256 -LiteralPath '${psSingle(cfg.outputDir)}\\job_query_veeam_13_ps7.ps1').Hash.ToLowerInvariant(); if($actual -ne '${hash}'){Write-Host ('Expected: ${hash}'); Write-Host ('Actual  : '+$actual); exit 9}"
+if errorlevel 1 goto :fail
+where pwsh.exe >nul 2>nul
+if errorlevel 1 (set "PSEXE=powershell.exe") else (set "PSEXE=pwsh.exe")
+echo Running Veeam job collector...
+echo Output: "%REPORT%"
+"%PSEXE%" -NoProfile -ExecutionPolicy Bypass -File "%COLLECTOR%" -JobName "%JOB_FILTER%" *> "%REPORT%"
+if errorlevel 1 goto :fail
+echo.
+echo Done. Import this file into the browser tool:
+echo "%CD%\\%REPORT%"
+pause
+exit /b 0
+:fail
+echo.
+echo [FATAL] Collection failed. See messages above.
+pause
+exit /b 1
+###BEGIN_COLLECTOR###
+${src.replace(/\n/g,'\r\n')}
+###END_COLLECTOR###
+`;}
+async function downloadCmd(){try{const cmd=await buildCmd();const cfg=readConfig();downloadBlob(new Blob([cmd],{type:'application/octet-stream'}),'Run_Veeam_Job_Report_'+safeLabel(cfg.customerName||'Collector','Collector')+'.cmd');showStatus(els.cmdStatus,'CMD downloaded. Run it on the Veeam server, then import '+cfg.outputFile+'.',true);}catch(err){showStatus(els.cmdStatus,'CMD generation failed: '+err.message,false);}}
+function parseKv(text){const out={};String(text||'').split(';').map(p=>p.trim()).filter(Boolean).forEach(part=>{const i=part.indexOf('=');if(i>0)out[part.slice(0,i).trim()]=part.slice(i+1).trim();});return out;}
+function shortenGfsText(s){return String(s||'').replace(/KeepBackupsForNumberOfWeeks\s*=\s*/gi,'Weeks=').replace(/KeepBackupsForNumberOfMonths\s*=\s*/gi,'Months=').replace(/KeepBackupsForNumberOfYears\s*=\s*/gi,'Years=');}
+function parseGfsLine(text,period){const raw=shortenGfsText(String(text||'').trim());if(!raw||raw.toLowerCase()==='none')return{time:'-',active:'No',countLabel:period,countValue:'-',raw:'none'};const map={};raw.split(';').map(p=>p.trim()).filter(Boolean).forEach(part=>{const i=part.indexOf('=');if(i>0)map[part.slice(0,i).trim().toLowerCase()]=part.slice(i+1).trim();});const active=map.isenabled==null?(map.enabled==null?'-':(String(map.enabled).toLowerCase()==='true'?'Yes':'No')):(String(map.isenabled).toLowerCase()==='true'?'Yes':'No');const key={Weeks:'weeks',Months:'months',Years:'years'}[period];return{time:map.desiredtime||map.time||'-',active,countLabel:period,countValue:map[key]||map.retentionperiod||'-',raw};}
+function parseReport(raw){const lines=normalizeLines(raw),jobs=[];let job=null,mode='none';function norm(arr){const a=arr.map(x=>String(x||'').trim()).filter(Boolean);return a.length?a:['none'];}function finish(){if(!job)return;job.includes=norm(job.includes);job.excludes=norm(job.excludes);job.tags=norm(job.tags);job.scheduleKv=parseKv(job.scheduleRaw);job.gfsTidy={weekly:parseGfsLine(job.gfs.weekly,'Weeks'),monthly:parseGfsLine(job.gfs.monthly,'Months'),yearly:parseGfsLine(job.gfs.yearly,'Years')};if(job.name)jobs.push(job);job=null;mode='none';}
+for(const line of lines){if(!line.trim())continue;if(/^=+$/.test(line.trim()))continue;const mJob=line.match(/^\s*Job:\s*(.+)$/i);if(mJob){finish();job={name:mJob[1].trim(),type:'',repository:'none',retention:'none',scheduleRaw:'none',gfs:{weekly:'none',monthly:'none',yearly:'none'},tags:[],includes:[],excludes:[]};mode='none';continue;}if(!job)continue;let m;if((m=line.match(/^\s*Type:\s*(.+)$/i))){job.type=m[1].trim();mode='none';continue;}if((m=line.match(/^\s*Repository\s*:\s*(.*)$/i))){job.repository=(m[1]||'none').trim()||'none';mode='none';continue;}if((m=line.match(/^\s*Retention\s*:\s*(.*)$/i))){job.retention=(m[1]||'none').trim()||'none';mode='none';continue;}if((m=line.match(/^\s*Schedule\s*:\s*(.*)$/i))){job.scheduleRaw=(m[1]||'none').trim()||'none';mode='none';continue;}if(/^\s*GFS:\s*$/i.test(line)){mode='gfs';continue;}if(/^\s*Tags:\s*$/i.test(line)){mode='tags';continue;}if(/^\s*Includes:\s*$/i.test(line)){mode='includes';continue;}if(/^\s*Excludes:\s*$/i.test(line)){mode='excludes';continue;}if(mode==='gfs'){if((m=line.match(/^\s*Weekly\s*:\s*(.*)$/i))){job.gfs.weekly=shortenGfsText(m[1].trim()||'none');continue;}if((m=line.match(/^\s*Monthly\s*:\s*(.*)$/i))){job.gfs.monthly=shortenGfsText(m[1].trim()||'none');continue;}if((m=line.match(/^\s*Yearly\s*:\s*(.*)$/i))){job.gfs.yearly=shortenGfsText(m[1].trim()||'none');continue;}}else if(mode==='tags'){if((m=line.match(/^\s*-\s*(.+)$/)))job.tags.push(m[1].trim());}else if(mode==='includes'){if((m=line.match(/^\s*\+\s*(.+)$/)))job.includes.push(m[1].trim());}else if(mode==='excludes'){if((m=line.match(/^\s*-\s*(.+)$/)))job.excludes.push(m[1].trim());}}
+finish();return jobs;}
+function hasAnyGfs(j){return ['weekly','monthly','yearly'].some(k=>String(j.gfs[k]||'').toLowerCase()!=='none');}
+function isActive(j){return String((j.scheduleKv||{}).Active||'').toLowerCase()==='true';}
+function activePill(v){const a=String(v||'').toLowerCase();if(a==='true')return{text:'Active',cls:'pill good'};if(a==='false')return{text:'Disabled',cls:'pill none'};return{text:'Unknown',cls:'pill warn'};}
+function scheduleBadge(mode){const m=String(mode||'none');return{text:'Mode: '+m,cls:m==='none'?'pill none':'pill good'};}
+function chip(item){const cls=String(item).toLowerCase()==='none'?'chip none':'chip';return '<span class="'+cls+'">'+escapeHtml(item)+'</span>';}
+function renderSummary(jobs){els.statJobs.textContent=jobs.length;els.statGfs.textContent=jobs.filter(hasAnyGfs).length;els.statActive.textContent=jobs.filter(isActive).length;const byRepo=new Map();jobs.forEach(j=>byRepo.set(j.repository,(byRepo.get(j.repository)||0)+1));const top=[...byRepo.entries()].sort((a,b)=>b[1]-a[1]).slice(0,6);els.topRepos.innerHTML=top.length?top.map(([r,c])=>'<span class="chip">'+escapeHtml(r)+' - '+c+'</span>').join(''):'<span class="chip none">none</span>';els.downloadDocx.disabled=!jobs.length;}
+function renderJobs(jobs,query){const q=String(query||'').trim().toLowerCase();const filtered=!q?jobs:jobs.filter(j=>[j.name,j.type,j.repository,j.retention,j.scheduleRaw,j.gfs.weekly,j.gfs.monthly,j.gfs.yearly,...j.includes,...j.excludes].join(' | ').toLowerCase().includes(q));if(!filtered.length){els.jobs.innerHTML='<div class="empty">No jobs matched your search.</div>';return;}els.jobs.innerHTML=filtered.map(j=>{const skv=j.scheduleKv||{},act=activePill(skv.Active),mode=scheduleBadge(skv.Mode),gw=j.gfsTidy.weekly,gm=j.gfsTidy.monthly,gy=j.gfsTidy.yearly;const rows=[];[['Mode',skv.Mode],['Start',skv.Start],['Retry times',skv.RetryTimes],['Retry timeout',skv.RetryTimeout],['Resume missed',skv.ResumeMissed],['Wait completion',skv.WaitForCompletion],['After job',skv.AfterJob],['Days',skv.Days],['Every',skv.Every]].forEach(([k,v])=>{if(v!=null&&v!=='')rows.push('<div class="k">'+escapeHtml(k)+':</div><div class="v">'+escapeHtml(v)+'</div>');});if(!rows.length)rows.push('<div class="k">Schedule:</div><div class="v">'+escapeHtml(j.scheduleRaw)+'</div>');function gfs(label,g){return '<div class="gfsRow"><div class="gfsHead"><span>'+label+'</span><span class="'+(g.active==='Yes'?'pill good':'pill none')+'">'+(g.active==='Yes'?'Active':'Inactive')+'</span></div><div class="kv"><div class="k">Time:</div><div class="v">'+escapeHtml(g.time)+'</div><div class="k">'+escapeHtml(g.countLabel)+':</div><div class="v">'+escapeHtml(g.countValue)+'</div></div></div>';}
+const detail=`Repository : ${j.repository}\nRetention  : ${j.retention}\nSchedule   : ${j.scheduleRaw}\n\nGFS:\n  Weekly  : ${j.gfs.weekly}\n  Monthly : ${j.gfs.monthly}\n  Yearly  : ${j.gfs.yearly}\n\nTags:\n  - ${j.tags.join('\n  - ')}\n\nIncludes:\n  + ${j.includes.join('\n  + ')}\n\nExcludes:\n  - ${j.excludes.join('\n  - ')}`;return '<article class="jobCard"><div class="jobHead"><div class="jobTitle"><div class="name">'+escapeHtml(j.name)+'</div><div class="badges"><span class="badge">'+escapeHtml(j.type||'(unknown)')+'</span><span class="badge primary">Repo: '+escapeHtml(j.repository)+'</span><span class="badge">Retention: '+escapeHtml(j.retention)+'</span><span class="'+mode.cls+'">'+escapeHtml(mode.text)+'</span><span class="'+act.cls+'">'+escapeHtml(act.text)+'</span></div></div></div><div class="jobBody"><div class="miniCard"><h3>Schedule</h3><div class="kv">'+rows.join('')+'</div></div><div class="miniCard"><h3>GFS</h3><div class="gfsGrid">'+gfs('Weekly',gw)+gfs('Monthly',gm)+gfs('Yearly',gy)+'</div></div><div class="miniCard scope"><h3>Scope</h3><div class="muted" style="font-size:12px">Includes</div><div class="chips" style="margin-top:7px">'+j.includes.map(chip).join('')+'</div><div class="muted" style="font-size:12px;margin-top:12px">Excludes</div><div class="chips" style="margin-top:7px">'+j.excludes.map(chip).join('')+'</div></div></div><details><summary>Details</summary><pre>'+escapeHtml(detail)+'</pre></details></article>';}).join('');}
+function refresh(){parsedJobs=parseReport(els.input.value);renderSummary(parsedJobs);renderJobs(parsedJobs,els.search.value);if(els.input.value.trim()&&!parsedJobs.length)showStatus(els.parseStatus,'No job blocks found. Check that the imported file contains lines beginning with Job:',false);else if(parsedJobs.length)showStatus(els.parseStatus,'Parsed '+parsedJobs.length+' job(s).',true);else clearStatus(els.parseStatus);}
+function truncate(text,max){const s=safeStr(text).replace(/\s+/g,' ').trim();return s.length>max?s.slice(0,max-3)+'...':s;}
+function x(s){return safeStr(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
+function wText(text,opts={}){const pr=[];if(opts.bold)pr.push('<w:b/>');if(opts.italic)pr.push('<w:i/>');pr.push('<w:sz w:val="'+(opts.size?Math.round(opts.size*2):17)+'"/>');return '<w:r><w:rPr>'+pr.join('')+'</w:rPr><w:t xml:space="preserve">'+x(text)+'</w:t></w:r>';}
+function paragraph(text,opts={}){let ppr='<w:pPr>';if(opts.style)ppr+='<w:pStyle w:val="'+opts.style+'"/>';ppr+='<w:jc w:val="'+(opts.align||'left')+'"/>';ppr+='<w:spacing w:before="0" w:after="'+(opts.after==null?80:opts.after)+'"/>';ppr+='</w:pPr>';return '<w:p>'+ppr+String(text||'').split('\n').map((part,i)=>(i?'<w:r><w:br/></w:r>':'')+wText(part,opts)).join('')+'</w:p>';}
+function heading(text,level){return paragraph(text,{style:'Heading'+level,bold:true,size:level===1?12:10,after:80});}
 function pageBreak(){return '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';}
-function noData(){return paragraph('No data found.',{size:8.5,after:80});}
-function cell(text,shade,isHeader){return '<w:tc><w:tcPr><w:tcW w:w="2400" w:type="dxa"/>'+(shade?'<w:shd w:val="clear" w:color="auto" w:fill="'+shade+'"/>':'')+'<w:tcMar><w:top w:w="30" w:type="dxa"/><w:left w:w="50" w:type="dxa"/><w:bottom w:w="30" w:type="dxa"/><w:right w:w="50" w:type="dxa"/></w:tcMar><w:vAlign w:val="center"/></w:tcPr>'+paragraph(text,{size:8,bold:!!isHeader,after:0})+'</w:tc>';}
-function tableXml(rows,cols,kv=false){if(!rows.length)return noData();const grid=cols.map(()=>'<w:gridCol w:w="2400"/>').join('');let xml='<w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="0" w:type="auto"/><w:jc w:val="center"/><w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr><w:tblGrid>'+grid+'</w:tblGrid>';if(!kv)xml+='<w:tr>'+cols.map(c=>cell(c,'B7D7F0',true)).join('')+'</w:tr>';for(const row of rows){xml+='<w:tr>';for(let i=0;i<cols.length;i++){const col=cols[i],value=Array.isArray(row)?row[i]:formatCellValue(col,row[col]);xml+=cell(truncate(value,120),kv&&i===0?'D9EAF7':'',false);}xml+='</w:tr>';}return xml+'</w:tbl>'+paragraph('',{after:80});}
-function kvTable(items){return tableXml(items,['Field','Value'],true);}
-function addTable(parts,title,rows,cols){parts.push(heading(title,2));if(!cols.length&&rows.length)cols=Object.keys(rows[0]).filter(k=>!isExcludedColumn(k)).slice(0,6);parts.push(tableXml(rows,cols.length?cols:['Value']));}
-function addBullets(parts,title,items){parts.push(heading(title,2));if(!items.length){parts.push(paragraph('No items found.',{size:8.5,after:80}));return;}for(const item of items)parts.push(paragraph(safeStr(item),{style:'ListBullet',size:8.5,after:0}));parts.push(paragraph('',{after:80}));}
-function buildDocumentBody(data){const p=[];const meta=data.Metadata||{},generated=formatDatetimeString(meta.GeneratedAt);p.push(paragraph('Veeam Backup & Replication\nConfiguration Inventory Report',{align:'center',bold:true,size:20,after:120}));[['Target Server: '+(meta.TargetServer||meta.Hostname||''),11],['Host Name: '+(meta.Hostname||''),9],['Generated: '+generated,9],['Collected By: '+(meta.User||''),9]].forEach(([t,s])=>p.push(paragraph(t,{align:'center',size:s,after:40})));p.push(pageBreak());const firstInfo=firstRecord(data.BackupServerInfo);p.push(heading('1. Environment Overview',1));p.push(kvTable([['Target Server',safeStr(meta.TargetServer)],['Host Name',safeStr(meta.Hostname)],['Collected By',safeStr(meta.User)],['Generated At',safeStr(meta.GeneratedAt)],['PowerShell Version',safeStr(meta.PSVersion)],['Backup Server Version',firstNonempty(firstInfo,['Version','BackupServerVersion','ProductVersion'])],['Build',firstNonempty(firstInfo,['Build','BuildNumber'])],['Edition',firstNonempty(firstInfo,['Edition'])]]));p.push(paragraph('This report provides a structured inventory of the Veeam Backup & Replication environment based on exported configuration data.',{size:8.5,after:80}));p.push(heading('2. Executive Summary',1));p.push(kvTable(buildExecutiveSummary(data)));p.push(heading('3. Infrastructure',1));const servers=ensureListOfDicts(data.Servers),repos=ensureListOfDicts(data.Repositories),sobra=ensureListOfDicts(data.ScaleOutRepositories),repoImmut=flattenSettingsRows(ensureListOfDicts(data.RepositoryImmutability)),vip=ensureListOfDicts(data.ViProxies),hvp=ensureListOfDicts(data.HvProxies);addTable(p,'Managed Servers',servers,cleanColumns(servers,['Name','Type','HostName','Version']));addTable(p,'Repositories',repos,cleanColumns(repos,['Name','Type','Path','Host','Capacity','FreeSpace']));addTable(p,'Scale-Out Backup Repositories',sobra,cleanColumns(sobra,['Name','Type','PolicyType','PlacementPolicy']));addTable(p,'Repository Immutability',repoImmut,cleanColumns(repoImmut,['RepositoryName','RepositoryType','IsImmutable','Immutable','ImmutabilityEnabled','MakeRecentBackupsImmutable','RetentionDays','ImmutabilityDays','ObjectLock','Hardened'],8));addTable(p,'VMware Backup Proxies',vip,cleanColumns(vip,['Name','Type','Host','TransportMode']));addTable(p,'Hyper-V Backup Proxies',hvp,cleanColumns(hvp,['Name','Type','Host']));p.push(heading('4. Security and Credentials',1));const creds=ensureListOfDicts(data.CredentialsMetadataOnly);addTable(p,'Stored Credentials',creds,cleanColumns(creds,['Name','Type','UserName','Domain','IsReadOnly','LastModifiedTime']));p.push(heading('5. Backup Jobs',1));const jobs=ensureListOfDicts(data.Jobs),comp=ensureListOfDicts(data.ComputerBackupJobs),jpm=ensureListOfDicts(data.JobProxyMapping),bcj=ensureListOfDicts(data.BackupCopyJobs),sure=ensureListOfDicts(data.SureBackupJobs),tape=ensureListOfDicts(data.TapeJobs);p.push(heading('Job Summary',2));p.push(kvTable(summarizeJobs(jobs)));addTable(p,'Backup Jobs',jobs,cleanColumns(jobs,['Name','JobType','Type','IsScheduleEnabled','IsEnabled','NextRun','LatestRunLocal']));addTable(p,'Computer Backup Jobs',comp,cleanColumns(comp,['Name','Type','IsEnabled','Mode','NextRun']));addTable(p,'Job to Proxy Mapping',jpm,cleanColumns(jpm,['JobName','JobType','ProxyName','ProxyRole']));addTable(p,'Backup Copy Jobs',bcj,cleanColumns(bcj,['Name','Type','IsEnabled','NextRun']));addTable(p,'SureBackup Jobs',sure,cleanColumns(sure,['Name','Type','IsEnabled']));addTable(p,'Tape Jobs',tape,cleanColumns(tape,['Name','Type','IsEnabled']));p.push(heading('6. Retention and GFS',1));const retention=flattenSettingsRows(ensureListOfDicts(data.JobRetentionPolicies)),gfs=flattenSettingsRows(ensureListOfDicts(data.JobGFSSettings));addTable(p,'Job Retention Policies',retention,cleanColumns(retention,['JobName','JobType','Source','RetentionType','RetentionPolicyType','RetentionNumber','RestorePoints','Quantity','Count','RetentionDays','KeepDays','KeepWeekly','KeepMonthly','KeepYearly'],8));addTable(p,'Job GFS Settings',gfs,cleanColumns(gfs,['JobName','JobType','GFS','Weekly','Monthly','Yearly','Quarterly','KeepWeekly','KeepMonthly','KeepYearly','Archive','SimpleRetention','LongTerm'],8));p.push(heading('7. Linux Components',1));const linux=ensureListOfDicts(data.LinuxPackages);addTable(p,'Linux Packages',linux,cleanColumns(linux,['Name','Version','Release','Architecture','Vendor']));p.push(heading('8. Warnings and Exceptions',1));const warnings=(Array.isArray(data.Warnings)?data.Warnings:(data.Warnings?[data.Warnings]:[])).map(safeStr).filter(Boolean);addBullets(p,'Collection Warnings',warnings);p.push(heading('9. Audit Extract',1));const audit=safeStr(data.Audit);if(audit.trim()){for(let i=0;i<audit.length;i+=2500)p.push(paragraph(audit.slice(i,i+2500),{size:8.5,after:40}));}else p.push(paragraph('No audit content was captured.',{size:8.5,after:80}));p.push(heading('10. Appendix',1));const cmdlets=ensureListOfDicts(data.AvailableVeeamCmdlets);p.push(heading('Appendix Summary',2));p.push(kvTable([['Captured Cmdlets',String(cmdlets.length)],['Source Format','JSON'],['Credential Handling','Secrets excluded; metadata only.']]));return p.join('');}
-// v0.2.0 report layout: overrides the compact defaults above with the supplied DOCX structure.
-function reportCol(key,label,fallback){return {key:key,label:label||key,fallback:Array.isArray(fallback)?fallback:(fallback?[fallback]:[])};}
-function reportColLabel(col){return typeof col==='string'?col:(col.label||col.key||'Value');}
-function reportColKeys(col){return typeof col==='string'?[col]:[col.key].concat(col.fallback||[]).filter(Boolean);}
-function reportCellValue(row,col){if(!row||typeof row!=='object')return '';for(const key of reportColKeys(col)){if(Object.prototype.hasOwnProperty.call(row,key)){const value=row[key];if(value!=null&&value!==''&&!(Array.isArray(value)&&!value.length))return value;}}return '';}
-function tableXml(rows,cols,kv=false){if(!rows.length)return noData();const grid=cols.map(()=>'<w:gridCol w:w="2400"/>').join('');let xml='<w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="0" w:type="auto"/><w:jc w:val="center"/><w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr><w:tblGrid>'+grid+'</w:tblGrid>';if(!kv)xml+='<w:tr>'+cols.map(c=>cell(reportColLabel(c),'B7D7F0',true)).join('')+'</w:tr>';for(const row of rows){xml+='<w:tr>';for(let i=0;i<cols.length;i++){const col=cols[i],raw=Array.isArray(row)?row[i]:reportCellValue(row,col);xml+=cell(truncate(formatCellValue(reportColLabel(col),raw),120),kv&&i===0?'D9EAF7':'',false);}xml+='</w:tr>';}return xml+'</w:tbl>'+paragraph('',{after:80});}
-function addTable(parts,title,rows,cols,emptyText){parts.push(heading(title,2));if(!rows.length){parts.push(paragraph(emptyText||'None',{size:8.5,after:80}));return;}parts.push(tableXml(rows,cols&&cols.length?cols:Object.keys(rows[0]).filter(k=>!isExcludedColumn(k)).slice(0,6)));}
-function addBullets(parts,title,items){if(title)parts.push(heading(title,2));if(!items.length){parts.push(paragraph('None',{size:8.5,after:80}));return;}for(const item of items)parts.push(paragraph(safeStr(item),{style:'ListBullet',size:8.5,after:0}));parts.push(paragraph('',{after:80}));}
-function addOptionalSettingsTable(parts,title,rows,preferred){if(rows.length)addTable(parts,title,rows,cleanColumns(rows,preferred,8));}
-function buildDocumentBodyV2(data){const p=[];const meta=data.Metadata||{},generated=formatDatetimeString(meta.GeneratedAt);let customer='';try{customer=safeStr(readConfig().customerName).trim();}catch(err){customer='';}if(customer)p.push(paragraph(customer.toUpperCase(),{align:'center',bold:true,size:11,after:80}));p.push(paragraph('Veeam Backup & Replication\nConfiguration Inventory Report',{align:'center',bold:true,size:20,after:120}));[['Target Server: '+(meta.TargetServer||meta.Hostname||''),11],['Host Name: '+(meta.Hostname||''),9],['Generated: '+generated,9],['Collected By: '+(meta.User||''),9],['Tool Version: '+APP_VERSION,8]].forEach(([t,s])=>p.push(paragraph(t,{align:'center',size:s,after:40})));p.push(pageBreak());const firstInfo=firstRecord(data.BackupServerInfo);p.push(heading('1. Environment Overview',1));p.push(kvTable([['Target Server',safeStr(meta.TargetServer)],['Host Name',safeStr(meta.Hostname)],['Collected By',safeStr(meta.User)],['Generated At',safeStr(meta.GeneratedAt)],['PowerShell Version',safeStr(meta.PSVersion)],['Backup Server Version',firstNonempty(firstInfo,['Version','BackupServerVersion','ProductVersion'])],['Build',firstNonempty(firstInfo,['Build','BuildNumber'])],['Edition',firstNonempty(firstInfo,['Edition'])]]));p.push(paragraph('This report provides a structured inventory of the Veeam Backup & Replication environment based on exported configuration data.',{size:8.5,after:80}));p.push(heading('2. Executive Summary',1));p.push(kvTable(buildExecutiveSummary(data)));p.push(heading('3. Infrastructure',1));const servers=ensureListOfDicts(data.Servers),repos=ensureListOfDicts(data.Repositories),sobra=ensureListOfDicts(data.ScaleOutRepositories),repoImmut=flattenSettingsRows(ensureListOfDicts(data.RepositoryImmutability)),vip=ensureListOfDicts(data.ViProxies),hvp=ensureListOfDicts(data.HvProxies);addTable(p,'Managed Servers',servers,['Name','Type','Info','IsUnavailable','ApiVersion']);addTable(p,'Backup Repositories',repos,['Name','Path','Host','Info']);addTable(p,'Scale-Out Backup Repositories',sobra,['Name',reportCol('Extent','Perf Extent'), 'UsePerVMBackupFiles','PerformFullWhenExtentOffline',reportCol('CapacityExtent','Capacity Extent (IBM COS)',['CapacityExtents','CapacityTierExtent','CapacityTier'])]);addTable(p,'Repository Immutability',repoImmut,cleanColumns(repoImmut,['RepositoryName','RepositoryType','IsImmutable','Immutable','ImmutabilityEnabled','MakeRecentBackupsImmutable','RetentionDays','ImmutabilityDays','ObjectLock','Hardened'],8));addTable(p,'VMware Backup Proxies',vip,['Name','Type','Host','TransportMode','Info','IsDisabled']);addTable(p,'Hyper-V Backup Proxies',hvp,['Name','Type','Host']);p.push(heading('4. Security and Credentials',1));const creds=ensureListOfDicts(data.CredentialsMetadataOnly);addTable(p,'Stored Credentials',creds,['Name','Type','UserName','Domain','IsReadOnly','LastModifiedTime']);p.push(heading('5. Backup Jobs',1));const jobs=ensureListOfDicts(data.Jobs),comp=ensureListOfDicts(data.ComputerBackupJobs),jpm=ensureListOfDicts(data.JobProxyMapping),bcj=ensureListOfDicts(data.BackupCopyJobs),fileCopy=ensureListOfDicts(data.FileCopyJobs),sure=ensureListOfDicts(data.SureBackupJobs),tape=ensureListOfDicts(data.TapeJobs);p.push(heading('Job Summary',2));p.push(kvTable(summarizeJobs(jobs)));addTable(p,'Backup Jobs',jobs,['Name','IsScheduleEnabled','LatestRunLocal','LogNameMainPart']);addTable(p,'Computer Backup Jobs',comp,['Name','BackupObject']);addTable(p,'Job to Proxy Mapping',jpm,['JobName','ProxyName','ProxyRole']);addTable(p,'Backup Copy Jobs',bcj,['Name','Target','TargetRepository','BackupJob','NextRun','LastResult']);addTable(p,'File Copy Jobs',fileCopy,['Name','Source','Target','NextRun','LastResult']);addTable(p,'SureBackup Jobs',sure,['Name','IsEnabled','ScheduleEnabled','NextRun','LastResult']);addTable(p,'Tape Jobs',tape,['Name','Type','IsEnabled','NextRun','LastResult']);p.push(heading('6. Retention and GFS',1));const retention=flattenSettingsRows(ensureListOfDicts(data.JobRetentionPolicies)),gfs=flattenSettingsRows(ensureListOfDicts(data.JobGFSSettings));addOptionalSettingsTable(p,'Job Retention Policies',retention,['JobName','JobType','Source','RetentionType','RetentionPolicyType','RetentionNumber','RestorePoints','Quantity','Count','RetentionDays','KeepDays','KeepWeekly','KeepMonthly','KeepYearly']);addOptionalSettingsTable(p,'Job GFS Settings',gfs,['JobName','JobType','GFS','Weekly','Monthly','Yearly','Quarterly','KeepWeekly','KeepMonthly','KeepYearly','Archive','SimpleRetention','LongTerm']);p.push(heading('7. Linux Components',1));p.push(paragraph('Not applicable in this case',{size:8.5,after:80}));const linux=ensureListOfDicts(data.LinuxPackages);addTable(p,'Linux Packages',linux,['DisplayName']);p.push(heading('8. Warnings and Exceptions',1));const warnings=(Array.isArray(data.Warnings)?data.Warnings:(data.Warnings?[data.Warnings]:[])).map(safeStr).filter(Boolean);addBullets(p,'',warnings);p.push(heading('9. Reporting',1));const reporting=firstNonempty(data,['Reporting','ReportingNotes','ReportNotes','NotificationSummary']);p.push(paragraph(reporting||'None',{size:8.5,after:80}));p.push(heading('10. Appendix',1));const cmdlets=ensureListOfDicts(data.AvailableVeeamCmdlets);p.push(heading('Appendix Summary',2));p.push(kvTable([['Captured Cmdlets',String(cmdlets.length)],['Source Format','JSON'],['Credential Handling','Secrets excluded; metadata only.']]));return p.join('');}
-function documentXml(data){return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+buildDocumentBodyV2(data)+'<w:sectPr><w:headerReference w:type="default" r:id="rIdHeader"/><w:footerReference w:type="default" r:id="rIdFooter"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="792" w:right="792" w:bottom="792" w:left="792" w:header="360" w:footer="360" w:gutter="0"/><w:cols w:space="720"/><w:docGrid w:linePitch="360"/></w:sectPr></w:body></w:document>';}
-function stylesXml(){return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="17"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:rPr><w:b/><w:sz w:val="24"/><w:color w:val="1A3A5C"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:rPr><w:b/><w:sz w:val="20"/><w:color w:val="374151"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="ListBullet"><w:name w:val="List Bullet"/><w:basedOn w:val="Normal"/><w:pPr><w:ind w:left="360" w:hanging="180"/></w:pPr></w:style><w:style w:type="table" w:default="1" w:styleId="TableGrid"><w:name w:val="Table Grid"/><w:tblPr><w:tblBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/><w:left w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/><w:right w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/></w:tblBorders></w:tblPr></w:style></w:styles>';}
-function headerXml(){return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'+paragraph('Veeam Configuration Inventory Report',{align:'right',italic:true,size:8})+'</w:hdr>';}
+function cell(text,fill,bold,width){return '<w:tc><w:tcPr><w:tcW w:w="'+width+'" w:type="dxa"/>'+(fill?'<w:shd w:fill="'+fill+'"/>':'')+'<w:tcMar><w:top w:w="30" w:type="dxa"/><w:start w:w="50" w:type="dxa"/><w:bottom w:w="30" w:type="dxa"/><w:end w:w="50" w:type="dxa"/></w:tcMar></w:tcPr>'+paragraph(text,{bold:bold,size:8,after:0})+'</w:tc>';}
+function tableXml(rows,cols,opts={}){if(!rows.length)return paragraph(opts.empty||'No data found.',{size:8.5,after:80});const total=15300,width=Math.floor(total/cols.length),grid=cols.map(()=>'<w:gridCol w:w="'+width+'"/>').join('');let xml='<w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="5000" w:type="pct"/><w:jc w:val="left"/><w:tblLayout w:type="fixed"/><w:tblLook w:val="04A0" w:firstRow="1" w:firstColumn="1" w:noHBand="0" w:noVBand="1"/></w:tblPr><w:tblGrid>'+grid+'</w:tblGrid>';xml+='<w:tr>'+cols.map(c=>cell(c,'B7D7F0',true,width)).join('')+'</w:tr>';for(const row of rows){xml+='<w:tr>'+cols.map(c=>cell(truncate(row[c],opts.max||150),'',false,width)).join('')+'</w:tr>';}return xml+'</w:tbl>'+paragraph('',{after:80});}
+function kvTable(items){return tableXml(items.map(([k,v])=>({Field:k,Value:v})),['Field','Value'],{max:180});}
+function docRows(){return parsedJobs.map(j=>{const skv=j.scheduleKv||{};return{'Job Name':j.name,Type:j.type,Repository:j.repository,Retention:j.retention,'Schedule':(skv.Active?('Active='+skv.Active+'; '):'')+(skv.Mode?('Mode='+skv.Mode):j.scheduleRaw)}});}
+function scheduleRows(){return parsedJobs.map(j=>{const s=j.scheduleKv||{};return{Job:j.name,Active:s.Active||'',Mode:s.Mode||'',Start:s.Start||'',Retries:[s.RetryTimes,s.RetryTimeout].filter(Boolean).join(' / '),'Resume Missed':s.ResumeMissed||'','Wait Completion':s.WaitForCompletion||''};});}
+function gfsRows(){return parsedJobs.map(j=>({Job:j.name,Weekly:j.gfs.weekly,Monthly:j.gfs.monthly,Yearly:j.gfs.yearly}));}
+function scopeRows(){return parsedJobs.map(j=>({Job:j.name,Includes:j.includes.join(', '),Excludes:j.excludes.join(', ')}));}
+function reportBody(){const cfg=readConfig(),now=new Date();const repos=new Set(parsedJobs.map(j=>j.repository).filter(r=>r&&r.toLowerCase()!=='none'));const active=parsedJobs.filter(isActive).length;let p='';if(cfg.customerName)p+=paragraph(cfg.customerName.toUpperCase(),{align:'center',bold:true,size:11,after:80});p+=paragraph('Veeam Backup & Replication\nJob Configuration Report',{align:'center',bold:true,size:20,after:120});p+=paragraph('Generated: '+now.toLocaleString(),{align:'center',size:9,after:40});p+=paragraph('Job Filter: '+cfg.jobFilter,{align:'center',size:9,after:40});p+=paragraph('Tool Version: '+APP_VERSION,{align:'center',size:8,after:40});p+=pageBreak();p+=heading('1. Executive Summary',1);p+=kvTable([['Jobs',String(parsedJobs.length)],['Active Schedules',String(active)],['Disabled or Unknown Schedules',String(parsedJobs.length-active)],['Repositories',String(repos.size)],['Jobs with GFS',String(parsedJobs.filter(hasAnyGfs).length)],['Source Format','Veeam PowerShell text output']]);p+=heading('2. Backup Jobs',1);p+=tableXml(docRows(),['Job Name','Type','Repository','Retention','Schedule'],{max:130});p+=heading('3. Schedule Details',1);p+=tableXml(scheduleRows(),['Job','Active','Mode','Start','Retries','Resume Missed','Wait Completion'],{max:90});p+=heading('4. Retention and GFS',1);p+=tableXml(gfsRows(),['Job','Weekly','Monthly','Yearly'],{max:150});p+=heading('5. Scope',1);p+=tableXml(scopeRows(),['Job','Includes','Excludes'],{max:180});p+=heading('6. Repository Summary',1);const repoRows=[...repos].sort().map(r=>({Repository:r,Jobs:parsedJobs.filter(j=>j.repository===r).map(j=>j.name).join(', '),Count:String(parsedJobs.filter(j=>j.repository===r).length)}));p+=tableXml(repoRows,['Repository','Jobs','Count'],{max:180});p+=heading('7. Appendix',1);p+=paragraph('Raw collector output follows. Long lines are wrapped by Word and job tables above are fixed-width and left-justified.',{size:8.5,after:80});const raw=els.input.value.trim();for(let i=0;i<raw.length;i+=2500)p+=paragraph(raw.slice(i,i+2500),{size:7.5,after:40});return p;}
+function documentXml(){return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+reportBody()+'<w:sectPr><w:headerReference w:type="default" r:id="rIdHeader"/><w:footerReference w:type="default" r:id="rIdFooter"/><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="360" w:footer="360" w:gutter="0"/><w:cols w:space="720"/></w:sectPr></w:body></w:document>';}
+function stylesXml(){return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="17"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:rPr><w:b/><w:sz w:val="24"/><w:color w:val="1A3A5C"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:rPr><w:b/><w:sz w:val="20"/><w:color w:val="374151"/></w:rPr></w:style><w:style w:type="table" w:default="1" w:styleId="TableGrid"><w:name w:val="Table Grid"/><w:tblPr><w:tblBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/><w:left w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/><w:right w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/></w:tblBorders></w:tblPr></w:style></w:styles>';}
+function headerXml(){return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'+paragraph('Veeam Job Configuration Report',{align:'right',italic:true,size:8})+'</w:hdr>';}
 function footerXml(){return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:pPr><w:jc w:val="center"/></w:pPr>'+wText('Generated report | Page ',{size:8})+'<w:fldSimple w:instr="PAGE"><w:r><w:rPr><w:sz w:val="16"/></w:rPr><w:t>1</w:t></w:r></w:fldSimple></w:p></w:ftr>';}
 function contentTypesXml(){return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>';}
 function relsXml(){return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>';}
 function docRelsXml(){return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rIdHeader" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/><Relationship Id="rIdFooter" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/></Relationships>';}
-function coreXml(){const now=new Date().toISOString();return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>Veeam Configuration Inventory Report</dc:title><dc:creator>VeeamStorageTools</dc:creator><cp:lastModifiedBy>VeeamStorageTools</cp:lastModifiedBy><dcterms:created xsi:type="dcterms:W3CDTF">'+now+'</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">'+now+'</dcterms:modified></cp:coreProperties>';}
+function coreXml(){const now=new Date().toISOString();return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>Veeam Job Configuration Report</dc:title><dc:creator>VeeamStorageTools</dc:creator><cp:lastModifiedBy>VeeamStorageTools</cp:lastModifiedBy><dcterms:created xsi:type="dcterms:W3CDTF">'+now+'</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">'+now+'</dcterms:modified></cp:coreProperties>';}
 function appXml(){return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>VeeamStorageTools</Application></Properties>';}
 const CRC_TABLE=(()=>{let c,t=[];for(let n=0;n<256;n++){c=n;for(let k=0;k<8;k++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}return t;})();
-function crc32(bytes){let c=0xffffffff;for(const b of bytes)c=CRC_TABLE[(c^b)&0xff]^(c>>>8);return (c^0xffffffff)>>>0;}
-function u16(n){return [n&255,(n>>>8)&255];}function u32(n){return [n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255];}
-function concatArrays(arrays){const len=arrays.reduce((a,b)=>a+b.length,0),out=new Uint8Array(len);let off=0;for(const a of arrays){out.set(a,off);off+=a.length;}return out;}
-function zipStore(entries){const enc=new TextEncoder(),locals=[],centrals=[];let offset=0;for(const [name,text] of entries){const nameBytes=enc.encode(name),data=enc.encode(text),crc=crc32(data),flags=0x0800;const local=concatArrays([new Uint8Array([0x50,0x4b,0x03,0x04]),new Uint8Array(u16(20)),new Uint8Array(u16(flags)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u32(crc)),new Uint8Array(u32(data.length)),new Uint8Array(u32(data.length)),new Uint8Array(u16(nameBytes.length)),new Uint8Array(u16(0)),nameBytes,data]);locals.push(local);const central=concatArrays([new Uint8Array([0x50,0x4b,0x01,0x02]),new Uint8Array(u16(20)),new Uint8Array(u16(20)),new Uint8Array(u16(flags)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u32(crc)),new Uint8Array(u32(data.length)),new Uint8Array(u32(data.length)),new Uint8Array(u16(nameBytes.length)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u32(0)),new Uint8Array(u32(offset)),nameBytes]);centrals.push(central);offset+=local.length;}const cd=concatArrays(centrals),body=concatArrays(locals);const end=concatArrays([new Uint8Array([0x50,0x4b,0x05,0x06]),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(entries.length)),new Uint8Array(u16(entries.length)),new Uint8Array(u32(cd.length)),new Uint8Array(u32(body.length)),new Uint8Array(u16(0))]);return concatArrays([body,cd,end]);}
-function generateDocx(data){const entries=[['[Content_Types].xml',contentTypesXml()],['_rels/.rels',relsXml()],['docProps/core.xml',coreXml()],['docProps/app.xml',appXml()],['word/document.xml',documentXml(data)],['word/styles.xml',stylesXml()],['word/_rels/document.xml.rels',docRelsXml()],['word/header1.xml',headerXml()],['word/footer1.xml',footerXml()]];return new Blob([zipStore(entries)],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});}
-function downloadDocx(){if(!STATE.data)return;try{const cfg=readConfig();const meta=STATE.data.Metadata||{};const label=safeLabel(cfg.customerName||meta.Hostname||meta.TargetServer||'Veeam','Veeam');const date=new Date().toISOString().slice(0,10).replace(/-/g,'');const filename='Veeam_Inventory_Report_'+label+'_'+date+'.docx';downloadBlob(generateDocx(STATE.data),filename);const el=document.getElementById('reportStatus');el.className='alert alert-success';el.textContent='DOCX generated: '+filename;el.style.display='block';showStatus('Downloaded '+filename);}catch(err){const el=document.getElementById('reportStatus');el.className='alert alert-danger';el.textContent='DOCX generation failed: '+err.message;el.style.display='block';}}
-document.addEventListener('DOMContentLoaded',()=>{document.getElementById('collectorHash').textContent=COLLECTOR_SHA256;loadConfig();refreshImport();const dz=document.getElementById('dropZone');['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag-over');}));['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag-over');}));dz.addEventListener('drop',e=>handleFile(e.dataTransfer.files[0]));});
+function crc32(bytes){let c=0xffffffff;for(const b of bytes)c=CRC_TABLE[(c^b)&0xff]^(c>>>8);return(c^0xffffffff)>>>0;}function u16(n){return[n&255,(n>>>8)&255];}function u32(n){return[n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255];}
+function concat(arrays){const len=arrays.reduce((a,b)=>a+b.length,0),out=new Uint8Array(len);let off=0;for(const a of arrays){out.set(a,off);off+=a.length;}return out;}
+function zipStore(entries){const enc=new TextEncoder(),locals=[],centrals=[];let offset=0;for(const [name,text] of entries){const nb=enc.encode(name),data=enc.encode(text),crc=crc32(data),flags=0x0800;const local=concat([new Uint8Array([0x50,0x4b,0x03,0x04]),new Uint8Array(u16(20)),new Uint8Array(u16(flags)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u32(crc)),new Uint8Array(u32(data.length)),new Uint8Array(u32(data.length)),new Uint8Array(u16(nb.length)),new Uint8Array(u16(0)),nb,data]);locals.push(local);const central=concat([new Uint8Array([0x50,0x4b,0x01,0x02]),new Uint8Array(u16(20)),new Uint8Array(u16(20)),new Uint8Array(u16(flags)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u32(crc)),new Uint8Array(u32(data.length)),new Uint8Array(u32(data.length)),new Uint8Array(u16(nb.length)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u32(0)),new Uint8Array(u32(offset)),nb]);centrals.push(central);offset+=local.length;}const cd=concat(centrals),body=concat(locals),end=concat([new Uint8Array([0x50,0x4b,0x05,0x06]),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(entries.length)),new Uint8Array(u16(entries.length)),new Uint8Array(u32(cd.length)),new Uint8Array(u32(body.length)),new Uint8Array(u16(0))]);return concat([body,cd,end]);}
+function generateDocx(){const entries=[['[Content_Types].xml',contentTypesXml()],['_rels/.rels',relsXml()],['docProps/core.xml',coreXml()],['docProps/app.xml',appXml()],['word/document.xml',documentXml()],['word/styles.xml',stylesXml()],['word/_rels/document.xml.rels',docRelsXml()],['word/header1.xml',headerXml()],['word/footer1.xml',footerXml()]];return new Blob([zipStore(entries)],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});}
+function downloadDocx(){if(!parsedJobs.length)return;const cfg=readConfig(),date=new Date().toISOString().slice(0,10).replace(/-/g,'');downloadBlob(generateDocx(),'Veeam_Job_Report_'+safeLabel(cfg.customerName||'Customer','Customer')+'_'+date+'.docx');}
+els.input.addEventListener('input',refresh);els.search.addEventListener('input',()=>renderJobs(parsedJobs,els.search.value));els.downloadCmd.addEventListener('click',downloadCmd);els.downloadDocx.addEventListener('click',downloadDocx);els.loadSample.addEventListener('click',()=>{els.input.value=SAMPLE;refresh();});els.clearAll.addEventListener('click',()=>{els.input.value='';els.search.value='';els.fileInput.value='';refresh();});els.copyRaw.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(els.input.value||'');showStatus(els.parseStatus,'Raw output copied.',true);}catch(err){window.prompt('Copy raw output:',els.input.value||'');}});els.fileInput.addEventListener('change',()=>{const f=els.fileInput.files&&els.fileInput.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{els.input.value=String(r.result||'');refresh();};r.onerror=()=>showStatus(els.parseStatus,'Could not read file: '+(r.error&&r.error.message?r.error.message:'unknown error'),false);r.readAsText(f);});
+(async()=>{try{els.collectorHash.textContent=await sha256Hex(collectorSource());}catch(err){els.collectorHash.textContent='Hash unavailable in this browser: '+err.message;}els.input.value=SAMPLE;refresh();})();
+})();
 </script>
 </body>
 </html>
