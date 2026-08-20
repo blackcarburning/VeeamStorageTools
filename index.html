@@ -437,7 +437,7 @@ foreach($r in (To-Array $repos | Select-Object -First 250)){
 foreach($sobr in (To-Array $sobrs | Select-Object -First 60)){
     $sobrName=(Get-Prop $sobr @('Name'))
     [void]$repoRows.Add([pscustomobject]@{Repository=$sobrName;Tier='SOBR';Parent='';Status=(Get-Prop $sobr @('State','Status'));Total='';Used='';Free='';UsedPct='';Location=(Get-Prop $sobr @('Description'))})
-    $sobrTotal=0.0; $sobrUsed=0.0; $sobrFree=0.0; $cnt=0; $mt=0; $mu=0; $mf=0
+    $sobrTotal=0.0; $sobrUsed=0.0; $sobrFree=0.0; $cnt=0; $missingTotal=0; $missingUsed=0; $missingFree=0
     if(Test-CmdletExists 'Get-VBRRepositoryExtent'){
         foreach($ext in @(Get-VBRRepositoryExtent -Repository $sobr -WarningAction SilentlyContinue)){
             $snap=Get-ExtentContainerSnapshot $ext
@@ -452,13 +452,13 @@ foreach($sobr in (To-Array $sobrs | Select-Object -First 60)){
             $path=(Get-Prop $ce @('Folder','Path','BucketName','ContainerName','AccountName'))
             [void]$repoRows.Add([pscustomobject]@{Repository=$ceName;Tier='Capacity';Parent=$sobrName;Status=(Get-Prop $ce @('State','Status'));Total=$snap.total;Used=$snap.used;Free=$snap.free;UsedPct=$snap.used_pct;Location=$path})
             [void]$capRows.Add([pscustomobject][ordered]@{sobr_name=$sobrName;capacity_extent_name=$ceName;capacity_extent_status=(Get-Prop $ce @('State','Status'));object_storage_path=$path;space=[ordered]@{total=$snap.total;used=$snap.used;free=$snap.free;used_pct=$snap.used_pct};source_cmdlet='Get-VBRCapacityExtent'})
-            if($null -ne $snap.total_raw){$sobrTotal += [double]$snap.total_raw}else{$mt++}
-            if($null -ne $snap.used_raw){$sobrUsed += [double]$snap.used_raw}else{$mu++}
-            if($null -ne $snap.free_raw){$sobrFree += [double]$snap.free_raw}else{$mf++}
+            if($null -ne $snap.total_raw){$sobrTotal += [double]$snap.total_raw}else{$missingTotal++}
+            if($null -ne $snap.used_raw){$sobrUsed += [double]$snap.used_raw}else{$missingUsed++}
+            if($null -ne $snap.free_raw){$sobrFree += [double]$snap.free_raw}else{$missingFree++}
         }
     }
     $pct=''; if($sobrTotal -gt 0){$pct=('{0:N2}' -f ((100.0*$sobrUsed)/$sobrTotal))}
-    [void]$capTotals.Add([pscustomobject][ordered]@{sobr_name=$sobrName;extent_count=$cnt;space=[ordered]@{total=(if($sobrTotal -gt 0){Format-Size $sobrTotal}else{''});used=(if($sobrUsed -gt 0){Format-Size $sobrUsed}else{''});free=(if($sobrFree -gt 0){Format-Size $sobrFree}else{''});used_pct=$pct};missing_total_count=$mt;missing_used_count=$mu;missing_free_count=$mf})
+    [void]$capTotals.Add([pscustomobject][ordered]@{sobr_name=$sobrName;extent_count=$cnt;space=[ordered]@{total=(if($sobrTotal -gt 0){Format-Size $sobrTotal}else{''});used=(if($cnt -gt $missingUsed){Format-Size $sobrUsed}else{''});free=(if($cnt -gt $missingFree){Format-Size $sobrFree}else{''});used_pct=$pct};missing_total_count=$missingTotal;missing_used_count=$missingUsed;missing_free_count=$missingFree})
 }
 $inventory.DefinedRepositories=@($repoRows | Select-Object -First 500)
 $inventory.CapacityTierUtilisation=[ordered]@{ schema_version='capacity-tier-utilisation-v1'; row_count=@($capRows).Count; rows=@($capRows | Select-Object -First 500); totals_by_sobr=@($capTotals); errors=@() }
@@ -473,7 +473,7 @@ if(Test-CmdletExists 'Get-VBRInstalledLicense'){
         })
     }catch{$inventory.Warnings+="VBRLicensing: $($_.Exception.Message)"}
 }
-$inventory.SobrOffloadStats=@($recentBackupSessions | Where-Object { (Get-Prop $_ @('JobType','Type','Name')) -match 'Offload|Capacity|Archive|Tier' } | Select-Object -First 200 | ForEach-Object {
+$inventory.SobrOffloadStats=@($recentBackupSessions | Where-Object { ((Get-Prop $_ @('JobType','Type')) -match 'Offload|Capacity|Archive|Tier') } | Select-Object -First 200 | ForEach-Object {
     [pscustomobject]@{SourceCmdlet='Get-VBRBackupSession';Name=(Get-Prop $_ @('JobName','Name'));Type=(Get-Prop $_ @('JobType','Type'));State=(Get-Prop $_ @('State','Status'));Result=(Get-Prop $_ @('Result'));StartTime=(Get-Prop $_ @('CreationTimeUTC','CreationTime','StartTime'));EndTime=(Get-Prop $_ @('EndTime'));Details=(Get-Prop $_ @('Description','Info'))}
 })
 
