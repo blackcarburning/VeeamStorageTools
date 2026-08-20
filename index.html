@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Veeam Job Report Builder</title>
+<title>Veeam Job Report Builder (VBR v13)</title>
 <style>
 :root{
   --bg:#0b0f17;
@@ -38,7 +38,7 @@ input[type="text"],textarea{width:100%;border:1px solid var(--line);border-radiu
 input[type="text"]{padding:9px 10px}textarea{min-height:260px;padding:11px 12px;font:12px/1.35 var(--mono);resize:vertical}
 input[type="file"]{width:100%;font-size:12px;color:var(--muted)}
 button{border:1px solid var(--line);background:rgba(15,23,42,.55);color:var(--text);border-radius:6px;padding:9px 11px;font-size:13px;cursor:pointer;transition:background .15s,border-color .15s,transform .05s;white-space:nowrap}
-button:hover{border-color:rgba(96,165,250,.55);background:rgba(96,165,250,.12)}button:active{transform:translateY(1px)}button.primary{background:#1d4ed8;border-color:#2563eb}button.primary:hover{background:#2563eb}button.good{background:#15803d;border-color:#16a34a}button.good:hover{background:#16a34a}button:disabled{opacity:.5;cursor:not-allowed}
+button:hover{border-color:rgba(96,165,250,.55);background:rgba(96,165,250,.12)}button:active{transform:translateY(1px)}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #93c5fd;outline-offset:2px}button.primary{background:#1d4ed8;border-color:#2563eb}button.primary:hover{background:#2563eb}button.good{background:#15803d;border-color:#16a34a}button.good:hover{background:#16a34a}button:disabled{opacity:.5;cursor:not-allowed}
 .note{border:1px solid rgba(96,165,250,.28);background:rgba(96,165,250,.09);border-radius:6px;padding:10px 11px;color:#dbeafe;font-size:12.5px}.warn{border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.10);color:#fde68a}.status{display:none;margin-top:10px;border-radius:6px;padding:9px 10px;font-size:12.5px}.status.show{display:block}.status.ok{border:1px solid rgba(34,197,94,.35);background:rgba(34,197,94,.10);color:#bbf7d0}.status.bad{border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.10);color:#fecaca}
 .summary{border-top:1px solid var(--line);padding-top:12px;display:grid;gap:8px}.stat{display:flex;justify-content:space-between;gap:12px;font-size:13px}.muted{color:var(--muted)}.chips{display:flex;flex-wrap:wrap;gap:7px}.chip,.badge,.pill{border:1px solid var(--line);background:rgba(2,6,23,.24);border-radius:999px;padding:5px 8px;font-size:12px;color:var(--text);max-width:100%;overflow-wrap:anywhere}.chip.none,.badge.none,.pill.none{opacity:.72}.badge.primary{border-color:rgba(96,165,250,.48);background:rgba(96,165,250,.10)}.pill.good{border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.10)}.pill.warn{border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.10)}
 .jobList{display:grid;gap:12px;min-width:0}.jobCard{overflow:hidden}.jobHead{padding:14px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:1px solid var(--line);background:rgba(96,165,250,.05)}.jobTitle{min-width:0;display:grid;gap:7px}.name{font-weight:800;font-size:16px;overflow-wrap:anywhere}.badges{display:flex;gap:7px;flex-wrap:wrap}.jobBody{display:grid;grid-template-columns:1.15fr 1fr;gap:12px;padding:14px}@media(max-width:980px){.jobBody{grid-template-columns:1fr}}.miniCard{border:1px solid var(--line);background:rgba(2,6,23,.20);border-radius:8px;padding:12px;min-width:0}.miniCard h3{margin:0 0 10px;font-size:13px}.kv{display:grid;grid-template-columns:116px minmax(0,1fr);gap:6px 10px;font-size:12px}.kv .k{color:var(--muted)}.kv .v{overflow-wrap:anywhere}.gfsGrid{display:grid;gap:8px}.gfsRow{border:1px solid rgba(148,163,184,.16);background:rgba(15,23,42,.35);border-radius:6px;padding:9px}.gfsHead{display:flex;justify-content:space-between;gap:8px;margin-bottom:7px;font-weight:700;font-size:12px}.scope{grid-column:1/-1}details{padding:0 14px 14px}summary{cursor:pointer;color:var(--muted);padding:10px 0;list-style:none}summary::-webkit-details-marker{display:none}pre{margin:0;border:1px solid var(--line);border-radius:6px;background:rgba(15,23,42,.72);padding:11px;font:12px/1.35 var(--mono);white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto}.empty{padding:30px;text-align:center;color:var(--muted)}footer{max-width:1240px;margin:0 auto;padding:0 18px 18px;color:var(--muted);font-size:12px}
@@ -47,10 +47,10 @@ button:hover{border-color:rgba(96,165,250,.55);background:rgba(96,165,250,.12)}b
 <body>
 <header>
   <div>
-    <h1>Veeam Job Report Builder</h1>
-    <p class="sub">Generate the CMD wrapper, import combined JSON or text output, review repository/retention/schedule/GFS/scope, and create the DOCX report locally in the browser.</p>
+    <h1>Veeam Job Report Builder (VBR v13)</h1>
+    <p class="sub">Generate a VBR v13-compatible read-only collector CMD, import JSON/text output, review expanded infrastructure/security/storage inventory, and create the DOCX report locally in the browser.</p>
   </div>
-  <div class="version">v0.5.1</div>
+  <div class="version">v0.6.0</div>
 </header>
 <main>
   <aside class="panel">
@@ -71,7 +71,7 @@ button:hover{border-color:rgba(96,165,250,.55);background:rgba(96,165,250,.12)}b
         <button id="downloadDocx" class="good" type="button" disabled>Download DOCX</button>
       </div>
       <div class="note warn">Run the generated CMD on the Veeam Backup &amp; Replication server. It writes the merged PowerShell collector to disk, runs the original inventory queries plus the newer job configuration queries, and writes JSON plus a text sidecar for import here.</div>
-      <div id="cmdStatus" class="status"></div>
+      <div id="cmdStatus" class="status" role="status" aria-live="polite"></div>
     </div>
   </aside>
 
@@ -87,17 +87,25 @@ button:hover{border-color:rgba(96,165,250,.55);background:rgba(96,165,250,.12)}b
         <div class="stat"><span class="muted">Active schedules</span><strong id="statActive">0</strong></div>
         <div><div class="muted" style="margin:8px 0 7px">Top repositories</div><div id="topRepos" class="chips"></div></div>
       </div>
-      <div id="parseStatus" class="status"></div>
+      <div id="parseStatus" class="status" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section id="overview" class="panel full">
+    <h2>Report overview and diagnostics</h2>
+    <div class="content stack">
+      <div id="overviewStats" class="chips"><span class="chip none">No report imported yet.</span></div>
+      <div><label for="sectionFilter">Section filter</label><input id="sectionFilter" type="text" placeholder="Filter section names, cmdlets, warnings..." aria-label="Filter section diagnostics"></div>
+      <div id="sectionDiagnostics" class="chips"></div>
     </div>
   </section>
 
   <section id="jobs" class="jobList full"></section>
 </main>
-<footer>Tables in the generated DOCX use fixed-width, left-justified layout so they stay inside the page. Combined JSON includes the original inventory queries plus repository capacity tiers, restore points, licensing, SOBR offload data, retention, schedule, GFS, tags, includes, and excludes.</footer>
+<footer>Tables in the generated DOCX use fixed-width, left-justified layout so they stay inside the page. Combined JSON includes expanded v13-oriented inventory, diagnostics, repositories/capacity tiers, restore points, sessions, licensing, security, retention, schedule, GFS, tags, and scope data.</footer>
 
 <script type="text/plain" id="collectorSource">
-#requires -Version 7.0
-
+#requires -Version 5.1
 param(
     [string]$Server = "localhost",
     [int]$AuditDays = 90,
@@ -116,1459 +124,257 @@ function Initialize-VeeamPowerShell {
             Import-Module 'Veeam.Backup.PowerShell' -ErrorAction Stop
         }
     }
-    else {
-        if (-not (Get-PSSnapin -Name 'VeeamPSSnapin' -ErrorAction SilentlyContinue)) {
-            Add-PSSnapin 'VeeamPSSnapin' -ErrorAction Stop
+    elseif (-not (Get-PSSnapin -Name 'VeeamPSSnapin' -ErrorAction SilentlyContinue)) {
+        Add-PSSnapin 'VeeamPSSnapin' -ErrorAction Stop
+    }
+}
+function Test-CmdletExists { param([string]$Name) [bool](Get-Command -Name $Name -ErrorAction SilentlyContinue) }
+function Get-Prop { param($Obj,[string[]]$Names) foreach($n in $Names){ if($Obj -and ($Obj.PSObject.Properties.Name -contains $n)){ $v=$Obj.$n; if($null -ne $v -and "$v".Trim().Length -gt 0){ return $v } } } $null }
+function Get-ObjectIdValue { param($Obj) Get-Prop $Obj @('Id','Uid','ObjectId','BackupId','PolicyId') }
+function To-Array($x){ if($null -eq $x){@()} elseif($x -is [array]){$x} else {@($x)} }
+function Select-RecentRows {
+    param([object[]]$Rows,[int]$Days=90,[int]$Limit=300,[string[]]$DateProps=@('CreationTime','CreationTimeUTC','EndTime','StartTime'))
+    $cutoff=(Get-Date).AddDays(-1*[math]::Abs($Days))
+    $filtered = foreach($r in (To-Array $Rows)){
+        $keep=$false
+        foreach($p in $DateProps){
+            try{ if($r.PSObject.Properties.Name -contains $p -and $r.$p -and ([datetime]$r.$p) -ge $cutoff){$keep=$true;break} }catch{}
         }
+        if($keep){$r}
     }
+    @(To-Array $filtered | Sort-Object { Get-Prop $_ $DateProps } -Descending | Select-Object -First $Limit)
 }
-
-function Test-CmdletExists {
-    param([string]$Name)
-    return [bool](Get-Command -Name $Name -ErrorAction SilentlyContinue)
-}
-
-function Get-SafeValue {
-    param(
-        [scriptblock]$Expression,
-        $Default = $null
-    )
-    try {
-        & $Expression
-    }
-    catch {
-        $Default
-    }
-}
-
-function Convert-ForExport {
-    param(
-        [Parameter(ValueFromPipeline = $true)]
-        $InputObject
-    )
-    process {
-        if ($null -eq $InputObject) { return $null }
-
-        $props = [ordered]@{}
-        foreach ($p in $InputObject.PSObject.Properties) {
-            try {
-                $name = $p.Name
-                $value = $p.Value
-
-                if ($null -eq $value) {
-                    $props[$name] = $null
-                }
-                elseif ($value -is [string] -or
-                        $value -is [int] -or
-                        $value -is [long] -or
-                        $value -is [double] -or
-                        $value -is [decimal] -or
-                        $value -is [bool] -or
-                        $value -is [datetime] -or
-                        $value -is [guid] -or
-                        $value.GetType().IsEnum) {
-                    $props[$name] = $value
-                }
-                elseif ($value -is [System.Array] -or ($value -is [System.Collections.IEnumerable] -and $value -isnot [string])) {
-                    $items = @()
-                    foreach ($i in $value) {
-                        if ($null -eq $i) { continue }
-
-                        if ($i -is [string] -or $i -is [ValueType]) {
-                            $items += $i
-                        }
-                        elseif ($i.PSObject.Properties["Name"]) {
-                            $items += $i.Name
-                        }
-                        else {
-                            $items += $i.ToString()
-                        }
-                    }
-                    $props[$name] = $items
-                }
-                else {
-                    if ($value.PSObject.Properties["Name"]) {
-                        $props[$name] = $value.Name
-                    }
-                    else {
-                        $props[$name] = $value.ToString()
-                    }
-                }
-            }
-            catch {
-                $props[$p.Name] = "<unavailable>"
-            }
+function Get-FlatData { param([object[]]$Data)
+    @(To-Array $Data | ForEach-Object {
+        $o=[ordered]@{}
+        foreach($p in $_.PSObject.Properties){
+            $v=$p.Value
+            if($null -eq $v){$o[$p.Name]=$null}
+            elseif($v -is [string] -or $v -is [bool] -or $v -is [int] -or $v -is [long] -or $v -is [double] -or $v -is [decimal] -or $v -is [datetime] -or $v -is [guid] -or $v.GetType().IsEnum){$o[$p.Name]=$v}
+            elseif($v -is [System.Collections.IEnumerable] -and $v -isnot [string]){$o[$p.Name]=@(To-Array $v | ForEach-Object { if($_ -and $_.PSObject.Properties['Name']){ $_.Name } else { "$_" } })}
+            elseif($v.PSObject.Properties['Name']){$o[$p.Name]=$v.Name}
+            else{$o[$p.Name]="$v"}
         }
-
-        [pscustomobject]$props
-    }
+        [pscustomobject]$o
+    })
 }
-
-function Get-FlatData {
-    param([object[]]$Data)
-
-    if ($null -eq $Data) { return @() }
-    if ($Data -isnot [System.Array]) { $Data = @($Data) }
-
-    return @($Data | Convert-ForExport)
+function New-SectionDiagnostic { param([string]$Section,[string[]]$SourceCmdlets,[string]$Status='ok',[string]$Message='',[int]$ItemCount=-1)
+    [pscustomobject][ordered]@{ Section=$Section; SourceCmdlets=@(To-Array $SourceCmdlets|Sort-Object -Unique); Status=$Status; Message=$Message; ItemCount=$ItemCount }
 }
-
-function Get-Prop {
-  param($Obj, [string[]]$Names)
-  foreach ($n in $Names) {
-    if ($Obj -and ($Obj.PSObject.Properties.Name -contains $n)) {
-      $v = $Obj.$n
-      if ($null -ne $v -and "$v".Trim().Length -gt 0) { return $v }
-    }
-  }
-  $null
+function Get-JobScheduleSummary { param($Job)
+    $so=$null; try{$so=$Job.ScheduleOptions}catch{}
+    if(-not $so){ return 'none' }
+    $active=if(Get-Prop $so @('IsEnabled','EnableSchedule')){'True'}else{'False'}
+    $mode='none'; foreach($m in @('OptionsDaily','OptionsMonthly','OptionsPeriodically','OptionsContinuous')){ $mv=Get-Prop $so @($m); if($mv -and (Get-Prop $mv @('Enabled'))){$mode=$m -replace '^Options','';break}}
+    $start=Get-Prop $so @('StartDateTimeLocal')
+    "Active=$active; Mode=$mode" + $(if($start){"; Start=$start"}else{''})
 }
-
-function As-ListOrNone {
-  param([object[]]$Items)
-  $arr = @($Items | Where-Object { $_ -and "$_".Trim().Length -gt 0 } | Sort-Object -Unique)
-  if ($arr.Count -eq 0) { return @('none') }
-  $arr
-}
-
-function Get-TagNamesFromJobObjects {
-  param([object[]]$JobObjects)
-  $tags = foreach ($o in $JobObjects) {
-    $loc = Get-Prop $o @('Location','Path','FullPath')
-    $nm  = Get-Prop $o @('Name')
-    if ($loc -and ($loc -match '(?i)\btag(s)?\b')) { $nm }
-  }
-  As-ListOrNone $tags
-}
-
-function Get-IncExc {
-  param($Job)
-  $objs = @(Get-VBRJobObject -Job $Job -ErrorAction SilentlyContinue)
-  $inc = @($objs | Where-Object { "$($_.Type)" -eq 'Include' } | ForEach-Object { $_.Name })
-  $exc = @($objs | Where-Object { "$($_.Type)" -eq 'Exclude' } | ForEach-Object { $_.Name })
-  [pscustomobject]@{
-    Objects  = $objs
-    Includes = As-ListOrNone $inc
-    Excludes = As-ListOrNone $exc
-    Tags     = Get-TagNamesFromJobObjects -JobObjects $objs
-  }
-}
-
-function Describe-SimpleProps {
-  param(
-    [Parameter(Mandatory)]$Obj,
-    [string[]]$Prefer = @()
-  )
-  if (-not $Obj) { return 'none' }
-
-  $props = @()
-
-  foreach ($p in $Prefer) {
-    if ($Obj.PSObject.Properties.Name -contains $p) {
-      $v = $Obj.$p
-      if ($null -ne $v -and "$v".Trim().Length -gt 0) {
-        $props += ("{0}={1}" -f $p, $v)
-      }
-    }
-  }
-
-  foreach ($p in $Obj.PSObject.Properties) {
-    if ($Prefer -contains $p.Name) { continue }
-    $v = $p.Value
-    if ($null -eq $v) { continue }
-
-    $isSimple =
-      ($v -is [string]) -or
-      ($v -is [bool])   -or
-      ($v -is [int])    -or
-      ($v -is [long])   -or
-      ($v -is [double]) -or
-      ($v -is [datetime]) -or
-      ($v.GetType().IsEnum)
-
-    if ($isSimple) {
-      $s = "$v".Trim()
-      if ($s.Length -gt 0) {
-        $props += ("{0}={1}" -f $p.Name, $s)
-      }
-    }
-  }
-
-  if ($props.Count -eq 0) { return 'none' }
-  return ($props | Sort-Object) -join '; '
-}
-
-# ---- GFS logic: always use Get-VBRJobOptions.GfsPolicy ----
-function Get-GfsBlock {
-  param([Parameter(Mandatory)]$JobOptions)
-
-  $gfs = Get-Prop $JobOptions @('GfsPolicy','GFS','Gfs','GfsOptions')
-  if (-not $gfs) {
-    $bso = Get-Prop $JobOptions @('BackupStorageOptions','StorageOptions')
-    if ($bso) { $gfs = Get-Prop $bso @('GfsPolicy','GFS','Gfs','GfsOptions') }
-  }
-
-  if (-not $gfs) {
-    return [pscustomobject]@{ Weekly='none'; Monthly='none'; Yearly='none' }
-  }
-
-  $weekly  = Get-Prop $gfs @('Weekly')
-  $monthly = Get-Prop $gfs @('Monthly')
-  $yearly  = Get-Prop $gfs @('Yearly')
-
-  $wDesc = if ($weekly)  { Describe-SimpleProps -Obj $weekly  -Prefer @('DesiredTime','IsEnabled','KeepBackupsForNumberOfWeeks','RetentionPeriod','SelectedDay','SelectedWeek') } else { 'none' }
-  $mDesc = if ($monthly) { Describe-SimpleProps -Obj $monthly -Prefer @('DesiredTime','IsEnabled','KeepBackupsForNumberOfMonths','RetentionPeriod','SelectedDay','SelectedWeek','SelectedDayOfMonth') } else { 'none' }
-  $yDesc = if ($yearly)  { Describe-SimpleProps -Obj $yearly  -Prefer @('DesiredTime','IsEnabled','KeepBackupsForNumberOfYears','RetentionPeriod','SelectedMonth','SelectedDay','SelectedWeek','SelectedDayOfMonth') } else { 'none' }
-
-  if ($weekly  -and ($weekly.PSObject.Properties.Name  -contains 'IsEnabled') -and (-not $weekly.IsEnabled))   { $wDesc = 'none' }
-  if ($monthly -and ($monthly.PSObject.Properties.Name -contains 'IsEnabled') -and (-not $monthly.IsEnabled)) { $mDesc = 'none' }
-  if ($yearly  -and ($yearly.PSObject.Properties.Name  -contains 'IsEnabled') -and (-not $yearly.IsEnabled))  { $yDesc = 'none' }
-
-  [pscustomobject]@{ Weekly=$wDesc; Monthly=$mDesc; Yearly=$yDesc }
-}
-
-# ---- Retention: job-configured retention (RetentionType-aware) ----
-function Get-RetentionText {
-  param([Parameter(Mandatory)]$Job)
-
-  $o = $null
-  try { $o = $Job.GetOptions() } catch { $o = $null }
-  if (-not $o) { return 'none' }
-
-  # Backup Copy jobs (BackupSync): use GenerationPolicy
-  if ($Job.JobType -eq 'BackupSync') {
-    $gp = Get-Prop $o @('GenerationPolicy')
-    if ($gp) {
-      $rp = Get-Prop $gp @('SimpleRetentionRestorePoints','RestorePointsToKeep','RetainCycles','RetentionCycles')
-      if ($rp) { return ("{0} restore points" -f $rp) }
-    }
-    return 'none'
-  }
-
-  $bso = Get-Prop $o @('BackupStorageOptions','StorageOptions')
-  if (-not $bso) { return 'none' }
-
-  $rtype = Get-Prop $bso @('RetentionType')
-  $rtypeS = if ($rtype) { "$rtype" } else { '' }
-
-  if ($rtypeS -match '(?i)^days$') {
-    $d = Get-Prop $bso @('RetainDaysToKeep','RetainDays')
-    if ($d) { return ("{0} days" -f $d) }
-    # fallback to cycles if days not available
-    $c = Get-Prop $bso @('RetainCycles','RetentionCycles','RestorePointsToKeep','RestorePoints')
-    if ($c) { return ("{0} restore points" -f $c) }
-    return 'none'
-  }
-
-  # Non-days types: treat as restore points/cycles
-  $c2 = Get-Prop $bso @('RetainCycles','RetentionCycles','RestorePointsToKeep','RestorePoints')
-  if ($c2) { return ("{0} restore points" -f $c2) }
-
-  # last resort
-  $any = Get-Prop $bso @('RetainDaysToKeep','RetainDays','RetainCycles','RetentionCycles','RestorePointsToKeep','RestorePoints')
-  if ($any) { return "$any" }
-
-  'none'
-}
-
-function Get-RepoNameForJob {
-  param($Job)
-
-  if ($Job.JobType -eq 'BackupSync') {
-    try {
-      $r = $Job.GetTargetRepository()
-      if ($r -and $r.Name) { return "$($r.Name)" }
-    } catch {}
-    return 'none'
-  }
-
-  try {
-    if ($Job.PSObject.Methods.Name -contains 'FindTargetRepository') {
-      $r = $Job.FindTargetRepository()
-      if ($r -and $r.Name) { return "$($r.Name)" }
-    }
-  } catch {}
-
-  try {
-    $opt = $Job.GetOptions()
-    foreach ($containerName in @('JobOptions','Options','BackupStorageOptions')) {
-      if ($opt -and ($opt.PSObject.Properties.Name -contains $containerName)) {
-        $c = $opt.$containerName
-        if ($c) {
-          foreach ($p in $c.PSObject.Properties) {
-            if ($p.Name -match '(?i)repo') {
-              $v = $p.Value
-              if ($v -and ($v.PSObject.Properties.Name -contains 'Name') -and $v.Name) { return "$($v.Name)" }
-              if ($v -is [string] -and $v.Trim()) { return $v.Trim() }
-            }
-          }
-        }
-      }
-    }
-  } catch {}
-
-  'none'
-}
-
-# ---- Schedule: show Active=True/False (PS5 compatible) ----
-function Get-JobScheduleSummary {
-  param([Parameter(Mandatory)]$Job)
-
-  $so = $null
-  try { $so = $Job.ScheduleOptions } catch { $so = $null }
-  if (-not $so) { return 'none' }
-
-  $daily   = Get-Prop $so @('OptionsDaily')
-  $monthly = Get-Prop $so @('OptionsMonthly')
-  $period  = Get-Prop $so @('OptionsPeriodically')
-  $cont    = Get-Prop $so @('OptionsContinuous')
-
-  $mode = 'none'
-  $modeObj = $null
-
-  foreach ($pair in @(
-    @('Daily', $daily),
-    @('Monthly', $monthly),
-    @('Periodically', $period),
-    @('Continuous', $cont)
-  )) {
-    $name = $pair[0]; $obj = $pair[1]
-    if ($obj -and ($obj.PSObject.Properties.Name -contains 'Enabled') -and [bool]$obj.Enabled) {
-      $mode = $name
-      $modeObj = $obj
-      break
-    }
-  }
-
-  $active = ($mode -ne 'none')
-  $activeText = 'False'
-  if ($active) { $activeText = 'True' }
-
-  $parts = @()
-  $parts += ("Active={0}" -f $activeText)
-  $parts += ("Mode={0}" -f $mode)
-
-  $start = Get-Prop $so @('StartDateTimeLocal')
-  if ($start) { $parts += ("Start={0}" -f $start) }
-
-  if ($so.PSObject.Properties.Name -contains 'RetrySpecified' -and [bool]$so.RetrySpecified) {
-    $parts += ("RetryTimes={0}" -f $so.RetryTimes)
-    $parts += ("RetryTimeout={0}" -f $so.RetryTimeout)
-  }
-
-  if ($so.PSObject.Properties.Name -contains 'ResumeMissedBackup') {
-    $parts += ("ResumeMissed={0}" -f $so.ResumeMissedBackup)
-  }
-
-  if ($so.PSObject.Properties.Name -contains 'WaitForBackupCompletion') {
-    $parts += ("WaitForCompletion={0}" -f $so.WaitForBackupCompletion)
-  }
-
-  ($parts -join '; ')
-}
-
-function Get-DeepValue {
-    param(
-        [object]$Object,
-        [string]$Path
-    )
-    if ($null -eq $Object -or [string]::IsNullOrWhiteSpace($Path)) { return $null }
-    $current = $Object
-    foreach ($part in ($Path -split '\.')) {
-        if ($null -eq $current) { return $null }
-        try {
-            $prop = $current.PSObject.Properties[$part]
-            if ($null -eq $prop) { return $null }
-            $current = $prop.Value
-        }
-        catch {
-            return $null
-        }
-    }
-    $current
-}
-
-function ConvertTo-SizeBytes {
-    param([object]$Value)
-    if ($null -eq $Value) { return $null }
-    if ($Value -is [byte] -or $Value -is [int16] -or $Value -is [int32] -or $Value -is [int64] -or
-        $Value -is [uint16] -or $Value -is [uint32] -or $Value -is [uint64] -or
-        $Value -is [single] -or $Value -is [double] -or $Value -is [decimal]) {
-        return [double]$Value
-    }
-    foreach ($path in @('InBytes','Bytes','Value','Size','TotalBytes','UsedBytes','FreeBytes')) {
-        $nested = Get-DeepValue -Object $Value -Path $path
-        if ($null -ne $nested -and -not [object]::ReferenceEquals($nested, $Value)) {
-            $converted = ConvertTo-SizeBytes -Value $nested
-            if ($null -ne $converted) { return [double]$converted }
-        }
-    }
-    if ($Value.PSObject.Methods['ToBytes']) {
-        try {
-            $bytes = $Value.ToBytes()
-            if ($null -ne $bytes) { return [double]$bytes }
-        } catch {}
-    }
-    $text = ([string]$Value).Trim()
-    if (-not $text) { return $null }
-    $match = [regex]::Match(($text -replace ',', ''), '^\s*(?<num>[-+]?\d+(\.\d+)?)\s*(?<unit>[KMGTP]?i?B)?\s*$', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-    if (-not $match.Success) { return $null }
-    $num = [double]$match.Groups['num'].Value
-    $unit = $match.Groups['unit'].Value.ToUpperInvariant()
-    switch -Regex ($unit) {
-        '^$|^B$' { return $num }
-        '^KIB$|^KB$' { return ($num * 1024) }
-        '^MIB$|^MB$' { return ($num * 1024 * 1024) }
-        '^GIB$|^GB$' { return ($num * 1024 * 1024 * 1024) }
-        '^TIB$|^TB$' { return ($num * 1024 * 1024 * 1024 * 1024) }
-        '^PIB$|^PB$' { return ($num * 1024 * 1024 * 1024 * 1024 * 1024) }
-        default { return $null }
-    }
-}
-
-function Get-FirstSizeBytes {
-    param([object[]]$Values)
-    foreach ($value in $Values) {
-        $bytes = ConvertTo-SizeBytes -Value $value
-        if ($null -ne $bytes) { return [double]$bytes }
-    }
-    $null
-}
-
-function Format-ByteSize {
-    param([object]$Bytes)
-    $value = ConvertTo-SizeBytes -Value $Bytes
-    if ($null -eq $value) { return '' }
-    if ($value -lt 0) { $value = 0 }
-    $units = @('B','KiB','MiB','GiB','TiB','PiB')
-    $idx = 0
-    while ($value -ge 1024 -and $idx -lt ($units.Count - 1)) {
-        $value = $value / 1024
-        $idx++
-    }
-    if ($idx -eq 0) { return ('{0:N0} {1}' -f $value, $units[$idx]) }
-    ('{0:N2} {1}' -f $value, $units[$idx])
-}
-
-function Format-UsedPercent {
-    param([object]$TotalBytes, [object]$UsedBytes)
-    $total = ConvertTo-SizeBytes -Value $TotalBytes
-    $used = ConvertTo-SizeBytes -Value $UsedBytes
-    if ($null -eq $total -or $null -eq $used -or $total -le 0) { return '' }
-    ('{0:N2}%' -f (($used / $total) * 100))
-}
-
-function Get-NonNegativeDifference {
-    param([object]$TotalBytes, [object]$UsedBytes)
-    $total = ConvertTo-SizeBytes -Value $TotalBytes
-    $used = ConvertTo-SizeBytes -Value $UsedBytes
-    if ($null -eq $total -or $null -eq $used) { return $null }
-    $diff = [double]$total - [double]$used
-    if ($diff -lt 0) { return [double]0 }
-    [double]$diff
-}
-
-function Get-RepositoryDisplayName {
-    param([object]$Repository)
-    if ($null -eq $Repository) { return '' }
-    foreach ($path in @('Name','FriendlyName','Repository.Name')) {
-        $value = Get-DeepValue -Object $Repository -Path $path
-        if (-not [string]::IsNullOrWhiteSpace([string]$value)) { return [string]$value }
-    }
-    [string]$Repository
-}
-
-function Get-RepositoryKey {
-    param([object]$Repository)
-    if ($null -eq $Repository) { return '' }
-    foreach ($path in @('Id','Uid','Info.Id','Repository.Id','Name','FriendlyName')) {
-        $value = Get-DeepValue -Object $Repository -Path $path
-        if (-not [string]::IsNullOrWhiteSpace([string]$value)) { return ([string]$value).Trim().Trim('{','}') }
-    }
-    [string]$Repository.GetHashCode()
-}
-
-function Get-RepositoryLocation {
-    param([object]$Repository)
-    if ($null -eq $Repository) { return '' }
-    foreach ($path in @('Path','Repository.Path','Info.Path','Container.Path','BucketName','Folder','SharePath','Host.Name','ServicePoint','ConnectionEndpoint')) {
-        $value = Get-DeepValue -Object $Repository -Path $path
-        if (-not [string]::IsNullOrWhiteSpace([string]$value)) { return [string]$value }
-    }
-    ''
-}
-
-function Get-RepositoryStatus {
-    param([object]$Repository)
-    if ($null -eq $Repository) { return '' }
-    foreach ($path in @('IsUnavailable','Repository.IsUnavailable')) {
-        $value = Get-DeepValue -Object $Repository -Path $path
-        if ($null -ne $value -and [bool]$value) { return 'Unavailable' }
-    }
-    foreach ($path in @('IsOutOfOrder','Repository.IsOutOfOrder')) {
-        $value = Get-DeepValue -Object $Repository -Path $path
-        if ($null -ne $value -and [bool]$value) { return 'OutOfOrder' }
-    }
-    foreach ($path in @('IsMaintenanceMode','Repository.IsMaintenanceMode')) {
-        $value = Get-DeepValue -Object $Repository -Path $path
-        if ($null -ne $value -and [bool]$value) { return 'Maintenance' }
-    }
-    foreach ($path in @('Status','State','Info.Status','Repository.Status','Repository.State')) {
-        $value = Get-DeepValue -Object $Repository -Path $path
-        if (-not [string]::IsNullOrWhiteSpace([string]$value)) { return [string]$value }
-    }
-    foreach ($path in @('Enabled','IsEnabled')) {
-        $value = Get-DeepValue -Object $Repository -Path $path
-        if ($null -ne $value) {
-            if ([bool]$value) { return 'Ready' }
-            return 'Disabled'
-        }
-    }
-    ''
-}
-
-function Get-RepositorySpace {
-    param(
-        [object]$Repository,
-        [switch]$ObjectStorage
-    )
-    if ($null -eq $Repository) { return @{ TotalBytes=$null; UsedBytes=$null; FreeBytes=$null } }
-    $container = $null
-    if ($Repository.PSObject.Methods['GetContainer']) {
-        try { $container = $Repository.GetContainer() } catch { $container = $null }
-    }
-    $total = Get-FirstSizeBytes @(
-        (Get-DeepValue $Repository 'CachedTotalSpace'), (Get-DeepValue $Repository 'TotalSpace'),
-        (Get-DeepValue $Repository 'Container.TotalSpace'), (Get-DeepValue $container 'CachedTotalSpace'),
-        (Get-DeepValue $container 'TotalSpace'), (Get-DeepValue $Repository 'Capacity'),
-        (Get-DeepValue $Repository 'Quota'), (Get-DeepValue $Repository 'Info.TotalSpace')
-    )
-    $used = Get-FirstSizeBytes @(
-        (Get-DeepValue $Repository 'CachedUsedSpace'), (Get-DeepValue $Repository 'UsedSpace'),
-        (Get-DeepValue $Repository 'Container.UsedSpace'), (Get-DeepValue $container 'CachedUsedSpace'),
-        (Get-DeepValue $container 'UsedSpace'), (Get-DeepValue $Repository 'UsedSize'),
-        (Get-DeepValue $Repository 'Info.UsedSpace')
-    )
-    $free = Get-FirstSizeBytes @(
-        (Get-DeepValue $Repository 'CachedFreeSpace'), (Get-DeepValue $Repository 'FreeSpace'),
-        (Get-DeepValue $Repository 'Container.FreeSpace'), (Get-DeepValue $container 'CachedFreeSpace'),
-        (Get-DeepValue $container 'FreeSpace'), (Get-DeepValue $Repository 'AvailableSpace'),
-        (Get-DeepValue $Repository 'Info.FreeSpace')
-    )
-    if ($ObjectStorage -and $null -eq $total) {
-        $sizeLimitEnabled = $false
-        foreach ($path in @('ObjectStorageSettings.SizeLimitEnabled','CapacityTierSettings.SizeLimitEnabled','SizeLimitEnabled','UseSizeLimit')) {
-            $value = Get-DeepValue $Repository $path
-            if ($null -ne $value) { $sizeLimitEnabled = [bool]$value; break }
-        }
-        if ($sizeLimitEnabled) {
-            $total = Get-FirstSizeBytes @(
-                (Get-DeepValue $Repository 'ObjectStorageSettings.SizeLimit'),
-                (Get-DeepValue $Repository 'CapacityTierSettings.SizeLimit'),
-                (Get-DeepValue $Repository 'SizeLimit'),
-                (Get-DeepValue $Repository 'StorageLimit')
-            )
-        }
-    }
-    if ($null -eq $used -and $null -ne $total -and $null -ne $free) { $used = Get-NonNegativeDifference -TotalBytes $total -UsedBytes $free }
-    if ($null -eq $free -and $null -ne $total -and $null -ne $used) { $free = Get-NonNegativeDifference -TotalBytes $total -UsedBytes $used }
-    @{ TotalBytes=$total; UsedBytes=$used; FreeBytes=$free }
-}
-
-function New-RepositoryInventoryRow {
-    param(
-        [string]$Repository,
-        [string]$Tier,
-        [string]$Parent,
-        [string]$Status,
-        [object]$TotalBytes,
-        [object]$UsedBytes,
-        [object]$FreeBytes,
-        [string]$Location,
-        [string]$Source,
-        [int]$SortGroup,
-        [int]$SortOrder
-    )
-    [pscustomobject][ordered]@{
-        Repository = $Repository
-        Tier = $Tier
-        Parent = $Parent
-        Status = $Status
-        Total = Format-ByteSize $TotalBytes
-        Used = Format-ByteSize $UsedBytes
-        Free = Format-ByteSize $FreeBytes
-        UsedPct = Format-UsedPercent -TotalBytes $TotalBytes -UsedBytes $UsedBytes
-        TotalBytes = $TotalBytes
-        UsedBytes = $UsedBytes
-        FreeBytes = $FreeBytes
-        Location = $Location
-        Source = $Source
-        SortGroup = $SortGroup
-        SortOrder = $SortOrder
-    }
-}
-
-function Get-CapacityExtentsForSobr {
-    param([object]$Sobr)
-    if (-not (Test-CmdletExists 'Get-VBRCapacityExtent')) { return @() }
-    try { return @(Get-VBRCapacityExtent -Repository $Sobr -ErrorAction SilentlyContinue -WarningAction SilentlyContinue) }
-    catch { return @() }
-}
-
-function Get-PerformanceExtentsForSobr {
-    param([object]$Sobr)
-    if (Test-CmdletExists 'Get-VBRRepositoryExtent') {
-        try { return @(Get-VBRRepositoryExtent -Repository $Sobr -ErrorAction SilentlyContinue -WarningAction SilentlyContinue) }
-        catch {}
-    }
-    foreach ($path in @('Extents','RepositoryExtents','PerformanceExtents')) {
-        $value = Get-DeepValue $Sobr $path
-        if ($value) { return @($value) }
-    }
-    @()
-}
-
-function Get-DefinedRepositoryRows {
-    $rows = New-Object System.Collections.Generic.List[object]
-    $attachedPhysical = New-Object 'System.Collections.Generic.HashSet[string]'([System.StringComparer]::OrdinalIgnoreCase)
-    $attachedObject = New-Object 'System.Collections.Generic.HashSet[string]'([System.StringComparer]::OrdinalIgnoreCase)
-    $objectKeys = New-Object 'System.Collections.Generic.HashSet[string]'([System.StringComparer]::OrdinalIgnoreCase)
-    $objectRepos = @()
-
-    if (Test-CmdletExists 'Get-VBRObjectStorageRepository') {
-        try {
-            $objectRepos = @(Get-VBRObjectStorageRepository -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)
-            foreach ($repo in $objectRepos) {
-                $key = Get-RepositoryKey $repo
-                if ($key) { [void]$objectKeys.Add($key) }
-            }
-        }
-        catch { $objectRepos = @() }
-    }
-
-    $sobrs = @()
-    if (Test-CmdletExists 'Get-VBRBackupRepository') {
-        try { $sobrs = @(Get-VBRBackupRepository -ScaleOut -ErrorAction SilentlyContinue -WarningAction SilentlyContinue) }
-        catch { $sobrs = @() }
-    }
-
-    $sobrOrder = 0
-    foreach ($sobr in $sobrs) {
-        $sobrOrder++
-        $sobrName = Get-RepositoryDisplayName $sobr
-        $sobrStatus = Get-RepositoryStatus $sobr
-        $perfTotal = $null
-        $perfUsed = $null
-
-        $extentOrder = 0
-        foreach ($extent in (Get-PerformanceExtentsForSobr $sobr)) {
-            $extentOrder++
-            $repo = Get-DeepValue $extent 'Repository'
-            if ($null -eq $repo) { $repo = $extent }
-            $key = Get-RepositoryKey $repo
-            $isObject = ($key -and $objectKeys.Contains($key))
-            if ($key) {
-                if ($isObject) { [void]$attachedObject.Add($key) }
-                else { [void]$attachedPhysical.Add($key) }
-            }
-            $space = Get-RepositorySpace -Repository $repo -ObjectStorage:$isObject
-            [void]$rows.Add((New-RepositoryInventoryRow -Repository (Get-RepositoryDisplayName $repo) -Tier ($(if ($isObject) { 'Perf extent (Obj)' } else { 'Perf extent' })) -Parent $sobrName -Status (Get-RepositoryStatus $repo) -TotalBytes $space.TotalBytes -UsedBytes $space.UsedBytes -FreeBytes $space.FreeBytes -Location (Get-RepositoryLocation $repo) -Source 'Get-VBRRepositoryExtent' -SortGroup 2 -SortOrder (($sobrOrder * 1000) + $extentOrder)))
-            if ($null -ne $space.TotalBytes) { if ($null -eq $perfTotal) { $perfTotal = 0 }; $perfTotal += $space.TotalBytes }
-            if ($null -ne $space.UsedBytes) { if ($null -eq $perfUsed) { $perfUsed = 0 }; $perfUsed += $space.UsedBytes }
-        }
-
-        $capOrder = 0
-        foreach ($cap in (Get-CapacityExtentsForSobr $sobr)) {
-            $capOrder++
-            $repo = Get-DeepValue $cap 'Repository'
-            if ($null -eq $repo) { $repo = $cap }
-            $key = Get-RepositoryKey $repo
-            if ($key) { [void]$attachedObject.Add($key) }
-            $space = Get-RepositorySpace -Repository $repo -ObjectStorage
-            [void]$rows.Add((New-RepositoryInventoryRow -Repository (Get-RepositoryDisplayName $repo) -Tier 'Capacity' -Parent $sobrName -Status (Get-RepositoryStatus $repo) -TotalBytes $space.TotalBytes -UsedBytes $space.UsedBytes -FreeBytes $space.FreeBytes -Location (Get-RepositoryLocation $repo) -Source 'Get-VBRCapacityExtent' -SortGroup 3 -SortOrder (($sobrOrder * 1000) + $capOrder)))
-        }
-
-        $sobrSpace = Get-RepositorySpace -Repository $sobr
-        if ($null -eq $perfTotal) { $perfTotal = $sobrSpace.TotalBytes }
-        if ($null -eq $perfUsed) { $perfUsed = $sobrSpace.UsedBytes }
-        $perfFree = if ($null -ne $perfTotal -and $null -ne $perfUsed) { Get-NonNegativeDifference -TotalBytes $perfTotal -UsedBytes $perfUsed } else { $sobrSpace.FreeBytes }
-        [void]$rows.Add((New-RepositoryInventoryRow -Repository $sobrName -Tier 'SOBR' -Parent '' -Status $sobrStatus -TotalBytes $perfTotal -UsedBytes $perfUsed -FreeBytes $perfFree -Location (Get-RepositoryLocation $sobr) -Source 'Get-VBRBackupRepository -ScaleOut' -SortGroup 1 -SortOrder $sobrOrder))
-    }
-
-    if (Test-CmdletExists 'Get-VBRBackupRepository') {
-        $standardRepos = @()
-        try { $standardRepos = @(Get-VBRBackupRepository -ErrorAction SilentlyContinue -WarningAction SilentlyContinue) }
-        catch { $standardRepos = @() }
-        $standardOrder = 0
-        foreach ($repo in $standardRepos) {
-            $isScaleOut = Get-DeepValue $repo 'IsScaleOut'
-            if ($null -ne $isScaleOut -and [bool]$isScaleOut) { continue }
-            $key = Get-RepositoryKey $repo
-            if ($key -and ($attachedPhysical.Contains($key) -or $objectKeys.Contains($key))) { continue }
-            $standardOrder++
-            $space = Get-RepositorySpace -Repository $repo
-            [void]$rows.Add((New-RepositoryInventoryRow -Repository (Get-RepositoryDisplayName $repo) -Tier 'Performance' -Parent 'Standalone' -Status (Get-RepositoryStatus $repo) -TotalBytes $space.TotalBytes -UsedBytes $space.UsedBytes -FreeBytes $space.FreeBytes -Location (Get-RepositoryLocation $repo) -Source 'Get-VBRBackupRepository' -SortGroup 4 -SortOrder $standardOrder))
-        }
-    }
-
-    $objectOrder = 0
-    foreach ($repo in $objectRepos) {
-        $key = Get-RepositoryKey $repo
-        if ($key -and $attachedObject.Contains($key)) { continue }
-        $objectOrder++
-        $space = Get-RepositorySpace -Repository $repo -ObjectStorage
-        [void]$rows.Add((New-RepositoryInventoryRow -Repository (Get-RepositoryDisplayName $repo) -Tier 'Object storage' -Parent 'Standalone' -Status (Get-RepositoryStatus $repo) -TotalBytes $space.TotalBytes -UsedBytes $space.UsedBytes -FreeBytes $space.FreeBytes -Location (Get-RepositoryLocation $repo) -Source 'Get-VBRObjectStorageRepository' -SortGroup 5 -SortOrder $objectOrder))
-    }
-
-    @($rows | Sort-Object SortGroup, SortOrder, Repository)
-}
-
-function New-CapacitySpaceObject {
-    param([object]$TotalBytes, [object]$UsedBytes, [object]$FreeBytes)
-    $total = ConvertTo-SizeBytes $TotalBytes
-    $used = ConvertTo-SizeBytes $UsedBytes
-    $free = ConvertTo-SizeBytes $FreeBytes
-    [pscustomobject][ordered]@{
-        total_bytes = $total
-        used_bytes = $used
-        free_bytes = $free
-        total = Format-ByteSize $total
-        used = Format-ByteSize $used
-        free = Format-ByteSize $free
-        used_pct = Format-UsedPercent -TotalBytes $total -UsedBytes $used
-    }
-}
-
-function New-CapacityTierSnapshot {
-    param([object[]]$DefinedRepositoryRows)
-    $capturedAt = (Get-Date).ToString('o')
-    $capRows = @(
-        foreach ($row in @($DefinedRepositoryRows)) {
-            if ([string]$row.Tier -notmatch '(?i)^Capacity$') { continue }
-            [pscustomobject][ordered]@{
-                sobr_name = [string]$row.Parent
-                capacity_extent_name = [string]$row.Repository
-                capacity_extent_status = [string]$row.Status
-                object_storage_path = [string]$row.Location
-                sampled_at = $capturedAt
-                tier = 'Capacity'
-                source_cmdlet = [string]$row.Source
-                space = New-CapacitySpaceObject -TotalBytes $row.TotalBytes -UsedBytes $row.UsedBytes -FreeBytes $row.FreeBytes
-            }
-        }
-    )
-    $totals = @(
-        $capRows | Group-Object sobr_name | ForEach-Object {
-            $total = $null; $used = $null; $free = $null; $missingTotal = 0; $missingUsed = 0; $missingFree = 0
-            foreach ($row in $_.Group) {
-                if ($null -eq $row.space.total_bytes) { $missingTotal++ } else { if ($null -eq $total) { $total = 0 }; $total += $row.space.total_bytes }
-                if ($null -eq $row.space.used_bytes) { $missingUsed++ } else { if ($null -eq $used) { $used = 0 }; $used += $row.space.used_bytes }
-                if ($null -eq $row.space.free_bytes) { $missingFree++ } else { if ($null -eq $free) { $free = 0 }; $free += $row.space.free_bytes }
-            }
-            [pscustomobject][ordered]@{
-                sobr_name = $_.Name
-                extent_count = @($_.Group).Count
-                missing_total_count = $missingTotal
-                missing_used_count = $missingUsed
-                missing_free_count = $missingFree
-                space = New-CapacitySpaceObject -TotalBytes $total -UsedBytes $used -FreeBytes $free
-            }
-        }
-    )
-    [pscustomobject][ordered]@{
-        schema_version = 'capacity-tier-utilisation-v1'
-        captured_at = $capturedAt
-        host = $env:COMPUTERNAME
-        row_count = @($capRows).Count
-        rows = @($capRows | Sort-Object sobr_name, capacity_extent_name)
-        totals_by_sobr = @($totals | Sort-Object sobr_name)
-        errors = @()
-    }
-}
-
-function Get-RestorePointDisplayName {
-    param([object]$RestorePoint)
-    foreach ($path in @('VmName','ObjectName','DisplayName','Name')) {
-        $value = Get-DeepValue $RestorePoint $path
-        if (-not [string]::IsNullOrWhiteSpace([string]$value)) { return [string]$value }
-    }
-    'Unknown machine'
-}
-
-function Get-RestorePointId {
-    param([object]$RestorePoint, [string]$Prefix)
-    foreach ($path in @('Id','OibId','BackupId')) {
-        $value = Get-DeepValue $RestorePoint $path
-        if (-not [string]::IsNullOrWhiteSpace([string]$value)) { return ([string]$value).Trim().Trim('{','}').ToLowerInvariant() }
-    }
-    $created = Get-Prop $RestorePoint @('CreationTime','CreationDate')
-    ('{0}|{1}|{2}' -f $Prefix, (Get-RestorePointDisplayName $RestorePoint), $created).ToLowerInvariant()
-}
-
-function Get-BackupVersionRows {
-    if (-not (Test-CmdletExists 'Get-VBRBackup')) { return @() }
-    $buckets = @{}
-    function Add-RestorePointCount {
-        param([string]$Machine, [string]$JobName, [string]$Id, [string]$Tier)
-        if ([string]::IsNullOrWhiteSpace($Machine)) { $Machine = 'Unknown machine' }
-        if ([string]::IsNullOrWhiteSpace($JobName)) { $JobName = 'Unknown job' }
-        if ([string]::IsNullOrWhiteSpace($Id)) { $Id = [guid]::NewGuid().ToString('N') }
-        $key = ('{0}|{1}' -f $Machine, $JobName)
-        if (-not $buckets.ContainsKey($key)) {
-            $buckets[$key] = [pscustomobject]@{
-                Machine = $Machine
-                JobName = $JobName
-                TotalIds = New-Object 'System.Collections.Generic.HashSet[string]'([System.StringComparer]::OrdinalIgnoreCase)
-                PerformanceIds = New-Object 'System.Collections.Generic.HashSet[string]'([System.StringComparer]::OrdinalIgnoreCase)
-                CapacityIds = New-Object 'System.Collections.Generic.HashSet[string]'([System.StringComparer]::OrdinalIgnoreCase)
-            }
-        }
-        [void]$buckets[$key].TotalIds.Add($Id)
-        if ($Tier -eq 'Capacity') { [void]$buckets[$key].CapacityIds.Add($Id) }
-        else { [void]$buckets[$key].PerformanceIds.Add($Id) }
-    }
-
-    foreach ($backup in @(Get-VBRBackup -ErrorAction SilentlyContinue)) {
-        $jobName = Get-Prop $backup @('JobName','Name')
-        $backupId = Get-RepositoryKey $backup
-        try {
-            foreach ($point in @(Get-VBRRestorePoint -Backup $backup -ErrorAction SilentlyContinue)) {
-                Add-RestorePointCount -Machine (Get-RestorePointDisplayName $point) -JobName $jobName -Id (Get-RestorePointId -RestorePoint $point -Prefix $backupId) -Tier 'Performance'
-            }
-        }
-        catch {}
-    }
-
-    if ((Test-CmdletExists 'Get-VBRSOBRObjectStorageBackup') -and (Test-CmdletExists 'Get-VBRSOBRObjectStorageRestorePoint')) {
-        try {
-            foreach ($backup in @(Get-VBRSOBRObjectStorageBackup -CapacityTier -ErrorAction SilentlyContinue)) {
-                $jobName = Get-Prop $backup @('JobName','Name')
-                $backupId = Get-RepositoryKey $backup
-                foreach ($point in @(Get-VBRSOBRObjectStorageRestorePoint -Backup $backup -ErrorAction SilentlyContinue)) {
-                    $isCapacity = Get-Prop $point @('IsCapacity')
-                    if ($null -ne $isCapacity -and -not [bool]$isCapacity) { continue }
-                    Add-RestorePointCount -Machine (Get-RestorePointDisplayName $point) -JobName $jobName -Id (Get-RestorePointId -RestorePoint $point -Prefix $backupId) -Tier 'Capacity'
-                }
-            }
-        }
-        catch {}
-    }
-
-    @(
-        foreach ($bucket in $buckets.Values) {
-            [pscustomobject][ordered]@{
-                Machine = $bucket.Machine
-                JobName = $bucket.JobName
-                TotalRestorePoints = $bucket.TotalIds.Count
-                PerformanceRestorePoints = $bucket.PerformanceIds.Count
-                CapacityRestorePoints = $bucket.CapacityIds.Count
-            }
-        }
-    ) | Sort-Object Machine, JobName
-}
-
-function Get-VbrLicensingRows {
-    $rows = New-Object System.Collections.Generic.List[object]
-    function Add-LicenseRow {
-        param([string]$SourceCmdlet, [object]$Item)
-        if ($null -eq $Item) { return }
-        try {
-            [void]$rows.Add([pscustomobject][ordered]@{
-                SourceCmdlet = $SourceCmdlet
-                Name = (Get-Prop $Item @('Name','LicensedTo','Description','Type','Object','Workload'))
-                Edition = (Get-Prop $Item @('Edition','LicenseEdition','Package'))
-                Status = (Get-Prop $Item @('Status','State','IsExpired'))
-                Expiration = (Get-Prop $Item @('ExpirationDate','ExpirationTime','SupportExpirationDate','MaintenanceExpirationDate'))
-                Licensed = (Get-Prop $Item @('LicensedInstancesNumber','LicensedSocketsNumber','SocketsNumber','Instances','Capacity'))
-                Used = (Get-Prop $Item @('UsedInstancesNumber','UsedSocketsNumber','Used','Consumed','InstanceCount','InstancesNumber'))
-                Details = (Describe-SimpleProps -Obj $Item -Prefer @('Name','Edition','Status','ExpirationDate','LicensedInstancesNumber','UsedInstancesNumber','LicensedSocketsNumber','UsedSocketsNumber','Object','Workload','InstancesNumber','InstanceCount'))
-            })
-        }
-        catch {}
-    }
-
-    function Test-CanInvokeWithoutMandatoryParameter {
-        param([string]$Name)
-        try {
-            $cmdInfo = Get-Command -Name $Name -ErrorAction Stop
-            $common = @('Verbose','Debug','ErrorAction','WarningAction','InformationAction','ProgressAction','ErrorVariable','WarningVariable','InformationVariable','OutVariable','OutBuffer','PipelineVariable')
-            foreach ($set in @($cmdInfo.ParameterSets)) {
-                $mandatory = @($set.Parameters | Where-Object { $_.IsMandatory -and ($common -notcontains $_.Name) })
-                if ($mandatory.Count -eq 0) { return $true }
-            }
-        }
-        catch {}
-        return $false
-    }
-
-    $installedLicenses = @()
-    if (Test-CmdletExists 'Get-VBRInstalledLicense') {
-        try {
-            $installedLicenses = @(Get-VBRInstalledLicense -ErrorAction Stop)
-            foreach ($license in $installedLicenses) {
-                Add-LicenseRow -SourceCmdlet 'Get-VBRInstalledLicense' -Item $license
-            }
-        }
-        catch {}
-    }
-
-    foreach ($cmd in @('Get-VBRInstanceLicenseSummary','Get-VBRSocketLicenseSummary','Get-VBRLicensedInstanceWorkload')) {
-        if (-not (Test-CmdletExists $cmd)) { continue }
-        foreach ($license in $installedLicenses) {
-            try {
-                foreach ($item in @(& $cmd -License $license -ErrorAction Stop)) {
-                    Add-LicenseRow -SourceCmdlet $cmd -Item $item
-                }
-            }
-            catch {}
-        }
-    }
-
-    foreach ($cmd in @('Get-VBRLicense','Get-VBRLicenseUsage')) {
-        if (-not (Test-CmdletExists $cmd)) { continue }
-        if (-not (Test-CanInvokeWithoutMandatoryParameter -Name $cmd)) { continue }
-        try {
-            foreach ($item in @(& $cmd -ErrorAction Stop)) {
-                Add-LicenseRow -SourceCmdlet $cmd -Item $item
-            }
-        }
-        catch {}
-    }
-    @($rows)
-}
-
-function Get-SobrOffloadRows {
-    $rows = New-Object System.Collections.Generic.List[object]
-    if (Test-CmdletExists 'Get-VBRCapacityTierSyncSession') {
-        try {
-            foreach ($session in @(Get-VBRCapacityTierSyncSession -ErrorAction SilentlyContinue)) {
-                [void]$rows.Add([pscustomobject][ordered]@{
-                    SourceCmdlet = 'Get-VBRCapacityTierSyncSession'
-                    Name = Get-Prop $session @('Name','JobName')
-                    Type = Get-Prop $session @('JobType','Type')
-                    State = Get-Prop $session @('State','Status')
-                    Result = Get-Prop $session @('Result')
-                    StartTime = Get-Prop $session @('CreationTime','StartTime','CreationTimeUTC')
-                    EndTime = Get-Prop $session @('EndTime','EndTimeUTC')
-                    Details = Describe-SimpleProps -Obj $session -Prefer @('Name','JobType','State','Result','CreationTime','EndTime')
-                })
-            }
-        }
-        catch {}
-    }
-    if (Test-CmdletExists 'Get-VBRSession') {
-        try {
-            foreach ($session in @(Get-VBRSession -ErrorAction SilentlyContinue | Where-Object { ("{0} {1}" -f (Get-Prop $_ @('JobType','Type')), (Get-Prop $_ @('Name','JobName'))) -match '(?i)offload|archive|capacity|sobr' } | Select-Object -First 200)) {
-                [void]$rows.Add([pscustomobject][ordered]@{
-                    SourceCmdlet = 'Get-VBRSession'
-                    Name = Get-Prop $session @('Name','JobName')
-                    Type = Get-Prop $session @('JobType','Type')
-                    State = Get-Prop $session @('State','Status')
-                    Result = Get-Prop $session @('Result')
-                    StartTime = Get-Prop $session @('CreationTime','StartTime','CreationTimeUTC')
-                    EndTime = Get-Prop $session @('EndTime','EndTimeUTC')
-                    Details = Describe-SimpleProps -Obj $session -Prefer @('Name','JobType','State','Result','CreationTime','EndTime')
-                })
-            }
-        }
-        catch {}
-    }
-    @($rows | Sort-Object StartTime -Descending)
-}
-
-function Get-FilteredVbrJobs {
-    param([string]$NameFilter)
-    if (-not $NameFilter) { $NameFilter = '*' }
-    try {
-        return @(Get-VBRJob -Name $NameFilter -WarningAction SilentlyContinue | Sort-Object Name)
-    }
-    catch {
-        try {
-            return @(Get-VBRJob -WarningAction SilentlyContinue | Where-Object { $_.Name -like $NameFilter } | Sort-Object Name)
-        }
-        catch {
-            return @()
-        }
-    }
-}
-
-function Write-CombinedTextReport {
-    param(
-        [object[]]$Jobs,
-        [string]$Path,
-        [object[]]$DefinedRepositories = @(),
-        [object]$CapacityTierUtilisation = $null,
-        [object[]]$BackupVersions = @(),
-        [object[]]$VBRLicensing = @(),
-        [object[]]$SobrOffloadStats = @()
-    )
-
-    $lines = New-Object System.Collections.Generic.List[string]
-    function Add-FixedTable {
-        param(
-            [System.Collections.Generic.List[string]]$Target,
-            [string]$Title,
-            [object[]]$Rows,
-            [string[]]$Columns
-        )
-        $Target.Add(("############### {0} BEGIN ###################" -f $Title))
-        if (-not $Rows -or @($Rows).Count -eq 0) {
-            $Target.Add('(no rows found)')
-            $Target.Add(("############### {0} END ###################" -f $Title))
-            return
-        }
-        $widths = @{}
-        foreach ($column in $Columns) {
-            $widths[$column] = [Math]::Max(8, [Math]::Min(34, $column.Length))
-        }
-        foreach ($row in $Rows) {
-            foreach ($column in $Columns) {
-                $value = [string](Get-Prop $row @($column))
-                $widths[$column] = [Math]::Max($widths[$column], [Math]::Min(34, $value.Length))
-            }
-        }
-        $header = @()
-        foreach ($column in $Columns) { $header += ([string]$column).PadRight($widths[$column]) }
-        $Target.Add(($header -join '  '))
-        $Target.Add(('-' * (($widths.Values | Measure-Object -Sum).Sum + (($Columns.Count - 1) * 2))))
-        foreach ($row in $Rows) {
-            $parts = @()
-            foreach ($column in $Columns) {
-                $value = [string](Get-Prop $row @($column))
-                if ($value.Length -gt $widths[$column]) { $value = $value.Substring(0, $widths[$column]) }
-                $parts += $value.PadRight($widths[$column])
-            }
-            $Target.Add(($parts -join '  '))
-        }
-        $Target.Add(("############### {0} END ###################" -f $Title))
-    }
-
-    foreach ($job in $Jobs) {
-        $sc = Get-IncExc -Job $job
-        $repo = Get-RepoNameForJob -Job $job
-        $sched = Get-JobScheduleSummary -Job $job
-
-        $opts = $null
-        try { $opts = $job | Get-VBRJobOptions -ErrorAction Stop } catch { $opts = $null }
-
-        $ret = Get-RetentionText -Job $job
-        $gfs = if ($opts) { Get-GfsBlock -JobOptions $opts } else { [pscustomobject]@{Weekly='none';Monthly='none';Yearly='none'} }
-
-        $lines.Add('')
-        $lines.Add('=' * 100)
-        $lines.Add(('Job:  {0}' -f $job.Name))
-        $lines.Add(('Type: {0}' -f $job.JobType))
-        $lines.Add('=' * 100)
-        $lines.Add('')
-        $lines.Add(('Repository : {0}' -f $repo))
-        $lines.Add(('Retention  : {0}' -f $ret))
-        $lines.Add(('Schedule   : {0}' -f $sched))
-        $lines.Add('')
-        $lines.Add('GFS:')
-        $lines.Add(('  Weekly  : {0}' -f $gfs.Weekly))
-        $lines.Add(('  Monthly : {0}' -f $gfs.Monthly))
-        $lines.Add(('  Yearly  : {0}' -f $gfs.Yearly))
-        $lines.Add('')
-        $lines.Add('Tags:')
-        foreach ($t in $sc.Tags) { $lines.Add(('  - {0}' -f $t)) }
-        $lines.Add('')
-        $lines.Add('Includes:')
-        foreach ($i in $sc.Includes) { $lines.Add(('  + {0}' -f $i)) }
-        $lines.Add('')
-        $lines.Add('Excludes:')
-        foreach ($e in $sc.Excludes) { $lines.Add(('  - {0}' -f $e)) }
-    }
-
-    $repoRows = @($DefinedRepositories | ForEach-Object {
-        [pscustomobject]@{
-            Repository = $_.Repository
-            Tier = $_.Tier
-            Parent = $_.Parent
-            Status = $_.Status
-            Total = $_.Total
-            Used = $_.Used
-            Free = $_.Free
-            UsedPct = $_.UsedPct
+function Get-JobConfigRows { param([object[]]$Jobs)
+    @(To-Array $Jobs | ForEach-Object {
+        $job=$_; $repo='none'; $ret='none'; $weekly='none'; $monthly='none'; $yearly='none';
+        try{ if($job.PSObject.Methods.Name -contains 'FindTargetRepository'){ $r=$job.FindTargetRepository(); if($r -and $r.Name){$repo=$r.Name} } }catch{}
+        try{
+            $opts = $job | Get-VBRJobOptions -ErrorAction Stop
+            $gfs = Get-Prop $opts @('GfsPolicy','GFS','Gfs')
+            if($gfs){ $gw=Get-Prop $gfs @('Weekly'); $gm=Get-Prop $gfs @('Monthly'); $gy=Get-Prop $gfs @('Yearly'); if([bool](Get-Prop $gw @('IsEnabled','Enabled'))){$weekly='enabled'}; if([bool](Get-Prop $gm @('IsEnabled','Enabled'))){$monthly='enabled'}; if([bool](Get-Prop $gy @('IsEnabled','Enabled'))){$yearly='enabled'} }
+            $bso = Get-Prop $opts @('BackupStorageOptions','StorageOptions')
+            if($bso){ $rpt=Get-Prop $bso @('RetainCycles','RetentionCycles','RestorePointsToKeep'); $days=Get-Prop $bso @('RetainDaysToKeep','RetainDays'); if($days){$ret="$days days"} elseif($rpt){$ret="$rpt restore points"} }
+        }catch{}
+        [pscustomobject][ordered]@{
+            Name=Get-Prop $job @('Name'); JobName=Get-Prop $job @('Name'); Type=Get-Prop $job @('JobType','Type'); JobType=Get-Prop $job @('JobType','Type');
+            Repository=$repo; Retention=$ret; Schedule=(Get-JobScheduleSummary -Job $job); Weekly=$weekly; Monthly=$monthly; Yearly=$yearly; Tags=@('none'); Includes=@('none'); Excludes=@('none')
         }
     })
-    Add-FixedTable -Target $lines -Title 'Defined Repository' -Rows $repoRows -Columns @('Repository','Tier','Parent','Status','Total','Used','Free','UsedPct')
-
-    $lines.Add('############### Capacity Tier Utilisation BEGIN ###################')
-    if ($CapacityTierUtilisation) {
-        $lines.Add(($CapacityTierUtilisation | ConvertTo-Json -Depth 12))
+}
+function Write-TextReport { param([object[]]$JobRows,[string]$Path)
+    $lines = New-Object System.Collections.Generic.List[string]
+    foreach($j in (To-Array $JobRows)){
+        $lines.Add('====================================================================================================')
+        $lines.Add(('Job:  {0}' -f $j.JobName))
+        $lines.Add(('Type: {0}' -f $j.JobType))
+        $lines.Add('====================================================================================================')
+        $lines.Add(('Repository : {0}' -f $j.Repository))
+        $lines.Add(('Retention  : {0}' -f $j.Retention))
+        $lines.Add(('Schedule   : {0}' -f $j.Schedule))
+        $lines.Add('')
+        $lines.Add('GFS:')
+        $lines.Add(('  Weekly  : {0}' -f $j.Weekly))
+        $lines.Add(('  Monthly : {0}' -f $j.Monthly))
+        $lines.Add(('  Yearly  : {0}' -f $j.Yearly))
+        $lines.Add('')
+        $lines.Add('Tags:'); foreach($x in (To-Array $j.Tags)){ $lines.Add('  - '+$x) }
+        $lines.Add('')
+        $lines.Add('Includes:'); foreach($x in (To-Array $j.Includes)){ $lines.Add('  + '+$x) }
+        $lines.Add('')
+        $lines.Add('Excludes:'); foreach($x in (To-Array $j.Excludes)){ $lines.Add('  - '+$x) }
+        $lines.Add('')
     }
-    else {
-        $lines.Add('{"schema_version":"capacity-tier-utilisation-v1","row_count":0,"rows":[],"totals_by_sobr":[],"errors":["not collected"]}')
-    }
-    $lines.Add('############### Capacity Tier Utilisation END ###################')
-
-    Add-FixedTable -Target $lines -Title 'Backup Versions' -Rows $BackupVersions -Columns @('Machine','JobName','TotalRestorePoints','PerformanceRestorePoints','CapacityRestorePoints')
-    Add-FixedTable -Target $lines -Title 'VBR Licensing' -Rows $VBRLicensing -Columns @('SourceCmdlet','Name','Edition','Status','Expiration','Licensed','Used')
-    Add-FixedTable -Target $lines -Title 'SOBR Offload Stats' -Rows $SobrOffloadStats -Columns @('SourceCmdlet','Name','Type','State','Result','StartTime','EndTime')
-
-    $fullTextPath = [System.IO.Path]::GetFullPath($Path)
-    $textDir = [System.IO.Path]::GetDirectoryName($fullTextPath)
-    if ($textDir -and -not [System.IO.Directory]::Exists($textDir)) {
-        [System.IO.Directory]::CreateDirectory($textDir) | Out-Null
-    }
-    $lines | Set-Content -Path $fullTextPath -Encoding UTF8
-    return $fullTextPath
+    $full=[IO.Path]::GetFullPath($Path); $dir=[IO.Path]::GetDirectoryName($full); if($dir -and -not [IO.Directory]::Exists($dir)){ [IO.Directory]::CreateDirectory($dir) | Out-Null }
+    $lines | Set-Content -Path $full -Encoding UTF8
+    $full
 }
 
 Initialize-VeeamPowerShell
+$schema='veeam-report-schema-v13.0.0'
+$collectorVersion='0.6.0'
+$sectionDiagnostics=New-Object System.Collections.Generic.List[object]
 
-try {
-    $session = Get-VBRServerSession -ErrorAction SilentlyContinue
-}
-catch {
-    $session = $null
-}
+$session=$null; try{$session=Get-VBRServerSession -ErrorAction SilentlyContinue}catch{}
+if(-not $session -and (Test-CmdletExists 'Connect-VBRServer')){ Connect-VBRServer -Server $Server | Out-Null }
 
-if (-not $session -and (Test-CmdletExists "Connect-VBRServer")) {
-    Connect-VBRServer -Server $Server | Out-Null
-}
+$availableCmdlets=@(); try{$availableCmdlets=@(Get-Command -Module Veeam.Backup.PowerShell -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)}catch{}
+$v130Cmdlets=@(); $v130FallbackUsed=$false; if(Test-CmdletExists 'Get-VBRCommand'){ try{$v130Cmdlets=@(Get-VBRCommand -V130 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)}catch{} }
+if(@($v130Cmdlets).Count -eq 0){ $v130FallbackUsed=$true; $v130Cmdlets = @($availableCmdlets | Where-Object { $_ -like 'Get-VBR*' } | Sort-Object -Unique) }
 
-$jobs = @()
-if (Test-CmdletExists "Get-VBRJob") {
-    $jobs = Get-FilteredVbrJobs -NameFilter $JobName
-}
-
-$inventory = [ordered]@{
-    Metadata = [ordered]@{
-        GeneratedAt     = (Get-Date).ToString("o")
-        TargetServer    = $Server
-        Hostname        = $env:COMPUTERNAME
-        User            = "$env:USERDOMAIN\$env:USERNAME"
-        PSVersion       = $PSVersionTable.PSVersion.ToString()
-        JobNameFilter   = $JobName
-        CollectorOutput = "Combined original inventory queries plus job repository, retention, schedule, GFS, tags, includes, excludes, repository capacity tiers, restore points, licensing, and SOBR offload data."
+$inventory=[ordered]@{
+    Metadata=[ordered]@{
+        SchemaVersion=$schema; CollectorVersion=$collectorVersion; GeneratedAt=(Get-Date).ToString('o'); TargetServer=$Server; Hostname=$env:COMPUTERNAME; User="$env:USERDOMAIN\$env:USERNAME";
+        PSVersion=$PSVersionTable.PSVersion.ToString(); RuntimeRequirement='Windows PowerShell 5.1 preferred in VBR console; PowerShell 7 optional if module is available'; JobNameFilter=$JobName; AuditDays=[math]::Abs($AuditDays);
+        CompatibilityStatus='Best effort by cmdlet availability, edition, licensing, and workload support.'; V130FallbackUsed=$v130FallbackUsed
     }
-    BackupServerInfo        = @()
-    Servers                 = @()
-    Repositories            = @()
-    ScaleOutRepositories    = @()
-    ViProxies               = @()
-    HvProxies               = @()
-    CredentialsMetadataOnly = @()
-    Jobs                    = @()
-    ComputerBackupJobs      = @()
-    JobProxyMapping         = @()
-    BackupCopyJobs          = @()
-    SureBackupJobs          = @()
-    TapeJobs                = @()
-    RecentBackupSessions    = @()
-    LinuxPackages           = @()
-    AvailableVeeamCmdlets   = @()
-    JobConfiguration        = @()
-    JobRetentionPolicies    = @()
-    JobGFSSettings          = @()
-    DefinedRepositories     = @()
-    CapacityTierUtilisation = $null
-    BackupVersions          = @()
-    VBRLicensing            = @()
-    SobrOffloadStats        = @()
-    TextReportPath          = $null
-    Audit                   = $null
-    Warnings                = @()
+    Compatibility=[ordered]@{ VBRServerSessionConnected=[bool](Get-VBRServerSession -ErrorAction SilentlyContinue); PowerShellEdition=$PSVersionTable.PSEdition; AvailableVeeamCmdletsCount=@($availableCmdlets).Count; V130CommandCount=@($v130Cmdlets).Count; V130FallbackUsed=$v130FallbackUsed }
+    CommandDiscovery=[ordered]@{ V130=@($v130Cmdlets|Sort-Object -Unique); Module=@($availableCmdlets|Sort-Object -Unique) }
+    ReferenceIndex=[ordered]@{ Jobs=@(); Backups=@(); Repositories=@(); ManagedServers=@(); Proxies=@(); ProtectionGroups=@(); Credentials=@(); TapeEntities=@(); MalwareEvents=@() }
+    BackupServerInfo=@(); Servers=@(); Repositories=@(); ScaleOutRepositories=@(); ObjectStorageRepositories=@(); ViProxies=@(); HvProxies=@(); JobProxies=@(); WanAccelerators=@(); MountServers=@();
+    CredentialsMetadataOnly=@(); Jobs=@(); ComputerBackupJobs=@(); BackupCopyJobs=@(); SureBackupJobs=@(); TapeJobs=@(); TapeInfrastructure=@();
+    RecentBackupSessions=@(); RecentTaskSessions=@(); RestorePointInventory=@(); JobConfiguration=@(); JobRetentionPolicies=@(); JobGFSSettings=@();
+    DefinedRepositories=@(); CapacityTierUtilisation=[ordered]@{ schema_version='capacity-tier-utilisation-v1'; row_count=0; rows=@(); totals_by_sobr=@(); errors=@('not collected by lightweight collector') };
+    BackupVersions=@(); VBRLicensing=@(); SobrOffloadStats=@(); SecurityCompliance=@(); MalwareDetectionEvents=@(); CertificateMetadata=@();
+    AvailableVeeamCmdlets=@(); Audit=$null; SectionDiagnostics=@(); Warnings=@(); TextReportPath=$null
 }
 
-if (Test-CmdletExists "Get-VBRBackupServerInfo") {
-    try { $inventory.BackupServerInfo = Get-FlatData (Get-VBRBackupServerInfo) }
-    catch { $inventory.Warnings += "BackupServerInfo: $($_.Exception.Message)" }
+if(Test-CmdletExists 'Get-VBRBackupServerInfo'){ try{$inventory.BackupServerInfo=Get-FlatData (Get-VBRBackupServerInfo); [void]$sectionDiagnostics.Add((New-SectionDiagnostic -Section 'BackupServerInfo' -SourceCmdlets @('Get-VBRBackupServerInfo') -ItemCount @($inventory.BackupServerInfo).Count))}catch{$inventory.Warnings+="BackupServerInfo: $($_.Exception.Message)"} }
+if(Test-CmdletExists 'Get-VBRServer'){ try{$servers=@(Get-VBRServer); $inventory.Servers=Get-FlatData $servers; $inventory.ReferenceIndex.ManagedServers=@($servers|ForEach-Object{[pscustomobject]@{Id=(Get-ObjectIdValue $_);Name=(Get-Prop $_ @('Name'));Type=(Get-Prop $_ @('Type','ServerType'))}})}catch{$inventory.Warnings+="Servers: $($_.Exception.Message)"} }
+if(Test-CmdletExists 'Get-VBRBackupRepository'){ try{$repos=@(Get-VBRBackupRepository); $inventory.Repositories=Get-FlatData $repos; $inventory.ReferenceIndex.Repositories=@($repos|ForEach-Object{[pscustomobject]@{Id=(Get-ObjectIdValue $_);Name=(Get-Prop $_ @('Name'));Type=(Get-Prop $_ @('Type'))}})}catch{$inventory.Warnings+="Repositories: $($_.Exception.Message)"}
+    try{$inventory.ScaleOutRepositories=Get-FlatData (Get-VBRBackupRepository -ScaleOut)}catch{$inventory.Warnings+="ScaleOutRepositories: $($_.Exception.Message)"}
 }
+if(Test-CmdletExists 'Get-VBRObjectStorageRepository'){ try{$inventory.ObjectStorageRepositories=Get-FlatData (Get-VBRObjectStorageRepository)}catch{$inventory.Warnings+="ObjectStorageRepositories: $($_.Exception.Message)"} }
+if(Test-CmdletExists 'Get-VBRViProxy'){ try{$inventory.ViProxies=Get-FlatData (Get-VBRViProxy)}catch{$inventory.Warnings+="ViProxies: $($_.Exception.Message)"} }
+if(Test-CmdletExists 'Get-VBRHvProxy'){ try{$inventory.HvProxies=Get-FlatData (Get-VBRHvProxy)}catch{$inventory.Warnings+="HvProxies: $($_.Exception.Message)"} }
+if(Test-CmdletExists 'Get-VBRProxy'){ try{$proxies=@(Get-VBRProxy); $inventory.JobProxies=Get-FlatData $proxies; $inventory.ReferenceIndex.Proxies=@($proxies|ForEach-Object{[pscustomobject]@{Id=(Get-ObjectIdValue $_);Name=(Get-Prop $_ @('Name'));Type=(Get-Prop $_ @('Type'))}})}catch{$inventory.Warnings+="JobProxies: $($_.Exception.Message)"} }
+if(Test-CmdletExists 'Get-VBRWANAccelerator'){ try{$inventory.WanAccelerators=Get-FlatData (Get-VBRWANAccelerator)}catch{$inventory.Warnings+="WanAccelerators: $($_.Exception.Message)"} }
+if(Test-CmdletExists 'Get-VBRMountServer'){ try{$inventory.MountServers=Get-FlatData (Get-VBRMountServer)}catch{$inventory.Warnings+="MountServers: $($_.Exception.Message)"} }
+if(Test-CmdletExists 'Get-VBRCredentials'){ try{$creds=@(Get-VBRCredentials); $inventory.CredentialsMetadataOnly=@($creds|ForEach-Object{[pscustomobject]@{Name=(Get-Prop $_ @('Name'));Type=(Get-Prop $_ @('Type'));Description=(Get-Prop $_ @('Description'));Id=(Get-Prop $_ @('Id'));UserName=(Get-Prop $_ @('UserName'));Domain=(Get-Prop $_ @('Domain'));LastModifiedTime=(Get-Prop $_ @('LastModifiedTime'))}}); $inventory.ReferenceIndex.Credentials=@($inventory.CredentialsMetadataOnly|ForEach-Object{[pscustomobject]@{Id=$_.Id;Name=$_.Name;Type=$_.Type}})}catch{$inventory.Warnings+="CredentialsMetadataOnly: $($_.Exception.Message)"} }
 
-if (Test-CmdletExists "Get-VBRServer") {
-    try { $inventory.Servers = Get-FlatData (Get-VBRServer) }
-    catch { $inventory.Warnings += "Servers: $($_.Exception.Message)" }
-}
+$jobs=@(); if(Test-CmdletExists 'Get-VBRJob'){ try{$jobs=@(Get-VBRJob -Name $JobName -WarningAction SilentlyContinue | Sort-Object Name)}catch{ try{$jobs=@(Get-VBRJob -WarningAction SilentlyContinue | Where-Object { $_.Name -like $JobName } | Sort-Object Name)}catch{} } }
+$inventory.Jobs=Get-FlatData $jobs
+$inventory.ReferenceIndex.Jobs=@($jobs|ForEach-Object{[pscustomobject]@{Id=(Get-ObjectIdValue $_);Name=(Get-Prop $_ @('Name'));Type=(Get-Prop $_ @('JobType'))}})
+$inventory.JobConfiguration=Get-JobConfigRows -Jobs $jobs
+$inventory.JobRetentionPolicies=@($inventory.JobConfiguration|ForEach-Object{[pscustomobject]@{JobName=$_.JobName;JobType=$_.JobType;Repository=$_.Repository;Retention=$_.Retention;Source='Job options'}})
+$inventory.JobGFSSettings=@($inventory.JobConfiguration|ForEach-Object{[pscustomobject]@{JobName=$_.JobName;JobType=$_.JobType;Weekly=$_.Weekly;Monthly=$_.Monthly;Yearly=$_.Yearly}})
 
-if (Test-CmdletExists "Get-VBRBackupRepository") {
-    try { $inventory.Repositories = Get-FlatData (Get-VBRBackupRepository) }
-    catch { $inventory.Warnings += "Repositories: $($_.Exception.Message)" }
+if(Test-CmdletExists 'Get-VBRComputerBackupJob'){ try{$inventory.ComputerBackupJobs=Get-FlatData (Get-VBRComputerBackupJob)}catch{$inventory.Warnings+="ComputerBackupJobs: $($_.Exception.Message)"} }
+if(Test-CmdletExists 'Get-VBRBackupCopyJob'){ try{$inventory.BackupCopyJobs=Get-FlatData (Get-VBRBackupCopyJob)}catch{$inventory.Warnings+="BackupCopyJobs: $($_.Exception.Message)"} }
+if(Test-CmdletExists 'Get-VBRSureBackupJob'){ try{$inventory.SureBackupJobs=Get-FlatData (Get-VBRSureBackupJob)}catch{$inventory.Warnings+="SureBackupJobs: $($_.Exception.Message)"} }
+if(Test-CmdletExists 'Get-VBRTapeJob'){ try{$inventory.TapeJobs=Get-FlatData (Get-VBRTapeJob)}catch{$inventory.Warnings+="TapeJobs: $($_.Exception.Message)"} }
 
-    try { $inventory.ScaleOutRepositories = Get-FlatData (Get-VBRBackupRepository -ScaleOut) }
-    catch { $inventory.Warnings += "ScaleOutRepositories: $($_.Exception.Message)" }
-}
-
-try {
-    $definedRepositoryRows = @(Get-DefinedRepositoryRows)
-    $inventory.DefinedRepositories = @($definedRepositoryRows)
-    $inventory.CapacityTierUtilisation = New-CapacityTierSnapshot -DefinedRepositoryRows $definedRepositoryRows
-}
-catch { $inventory.Warnings += "DefinedRepositories/CapacityTierUtilisation: $($_.Exception.Message)" }
-
-if (Test-CmdletExists "Get-VBRViProxy") {
-    try { $inventory.ViProxies = Get-FlatData (Get-VBRViProxy) }
-    catch { $inventory.Warnings += "ViProxies: $($_.Exception.Message)" }
-}
-
-if (Test-CmdletExists "Get-VBRHvProxy") {
-    try { $inventory.HvProxies = Get-FlatData (Get-VBRHvProxy) }
-    catch { $inventory.Warnings += "HvProxies: $($_.Exception.Message)" }
-}
-
-if (Test-CmdletExists "Get-VBRCredentials") {
-    try {
-        $creds = Get-VBRCredentials
-        $inventory.CredentialsMetadataOnly = @(
-            foreach ($c in $creds) {
-                [pscustomobject]@{
-                    Name             = Get-SafeValue { $c.Name }
-                    Type             = Get-SafeValue { $c.Type }
-                    Description      = Get-SafeValue { $c.Description }
-                    Id               = Get-SafeValue { $c.Id }
-                    UserName         = Get-SafeValue { $c.UserName }
-                    Domain           = Get-SafeValue { $c.Domain }
-                    IsReadOnly       = Get-SafeValue { $c.IsReadOnly }
-                    CreationTime     = Get-SafeValue { $c.CreationTime }
-                    LastModifiedTime = Get-SafeValue { $c.LastModifiedTime }
-                }
+if(Test-CmdletExists 'Get-VBRTapeServer'){
+    try{
+        $ti=New-Object System.Collections.Generic.List[object]
+        foreach($cmd in @('Get-VBRTapeServer','Get-VBRTapeLibrary','Get-VBRTapeDrive','Get-VBRTapeMediaPool')){
+            if(-not (Test-CmdletExists $cmd)){continue}
+            foreach($item in @(& $cmd -ErrorAction SilentlyContinue)){
+                [void]$ti.Add([pscustomobject]@{SourceCmdlet=$cmd;Name=(Get-Prop $item @('Name','LibraryName','DriveName'));Type=(Get-Prop $item @('Type'));Status=(Get-Prop $item @('Status','State'))})
             }
-        )
-    }
-    catch { $inventory.Warnings += "CredentialsMetadataOnly: $($_.Exception.Message)" }
+        }
+        $inventory.TapeInfrastructure=@($ti)
+        $inventory.ReferenceIndex.TapeEntities=@($ti|ForEach-Object{[pscustomobject]@{Name=$_.Name;Type=$_.Type;Source=$_.SourceCmdlet}})
+    }catch{$inventory.Warnings+="TapeInfrastructure: $($_.Exception.Message)"}
 }
 
-$inventory.Jobs = Get-FlatData $jobs
+if(Test-CmdletExists 'Get-VBRBackupSession'){ try{$inventory.RecentBackupSessions=Get-FlatData (Select-RecentRows -Rows (Get-VBRBackupSession -WarningAction SilentlyContinue) -Days $AuditDays -Limit 300)}catch{$inventory.Warnings+="RecentBackupSessions: $($_.Exception.Message)"} }
+if(Test-CmdletExists 'Get-VBRTaskSession'){ try{$inventory.RecentTaskSessions=Get-FlatData (Select-RecentRows -Rows (Get-VBRTaskSession -WarningAction SilentlyContinue) -Days $AuditDays -Limit 500 -DateProps @('CreationTimeUTC','CreationTime','EndTime'))}catch{$inventory.Warnings+="RecentTaskSessions: $($_.Exception.Message)"} }
+if(Test-CmdletExists 'Get-VBRBackup'){ try{$backups=@(Get-VBRBackup -WarningAction SilentlyContinue); $inventory.ReferenceIndex.Backups=@($backups|ForEach-Object{[pscustomobject]@{Id=(Get-ObjectIdValue $_);Name=(Get-Prop $_ @('Name'));JobName=(Get-Prop $_ @('JobName'))}}); $inventory.RestorePointInventory=@($backups|Select-Object -First 100|ForEach-Object{$b=$_;$pts=@();try{$pts=@(Get-VBRRestorePoint -Backup $b -WarningAction SilentlyContinue)}catch{};[pscustomobject]@{BackupName=(Get-Prop $b @('Name'));JobName=(Get-Prop $b @('JobName'));Platform=(Get-Prop $b @('Platform'));IsEncrypted=(Get-Prop $b @('IsEncrypted','Encrypted'));RestorePointCount=@($pts).Count}})}catch{$inventory.Warnings+="RestorePointInventory: $($_.Exception.Message)"} }
 
-if ($jobs.Count -gt 0 -and (Test-CmdletExists "Get-VBRJobProxy")) {
-    try {
-        $inventory.JobProxyMapping = @(
-            foreach ($j in $jobs) {
-                try {
-                    $src = @(Get-VBRJobProxy -Job $j -WarningAction SilentlyContinue -ErrorAction Stop)
-                    foreach ($p in $src) {
-                        [pscustomobject]@{
-                            JobName   = Get-SafeValue { $j.Name }
-                            JobType   = Get-SafeValue { $j.JobType }
-                            ProxyName = Get-SafeValue { $p.Name } -Default (Get-SafeValue { $p.ToString() })
-                            ProxyRole = "Source"
-                        }
-                    }
-
-                    $tgt = @(Get-VBRJobProxy -Job $j -Target -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)
-                    foreach ($p in $tgt) {
-                        [pscustomobject]@{
-                            JobName   = Get-SafeValue { $j.Name }
-                            JobType   = Get-SafeValue { $j.JobType }
-                            ProxyName = Get-SafeValue { $p.Name } -Default (Get-SafeValue { $p.ToString() })
-                            ProxyRole = "Target"
-                        }
-                    }
-                }
-                catch {
-                    [pscustomobject]@{
-                        JobName   = Get-SafeValue { $j.Name }
-                        JobType   = Get-SafeValue { $j.JobType }
-                        ProxyName = "<lookup failed>"
-                        ProxyRole = ""
-                    }
-                }
-            }
-        )
-    }
-    catch { $inventory.Warnings += "JobProxyMapping: $($_.Exception.Message)" }
+foreach($cmd in @('Get-VBRMalwareDetectionEvent','Get-VBRMalwareDetectionOptions','Get-VBRSecurityComplianceAnalyzerResult','Get-VBRCertificate')){
+    if(-not (Test-CmdletExists $cmd)){continue}
+    try{
+        $items=@(& $cmd -ErrorAction SilentlyContinue)
+        if($cmd -eq 'Get-VBRMalwareDetectionEvent'){ $bounded=Select-RecentRows -Rows $items -Days $AuditDays -Limit 300; $inventory.MalwareDetectionEvents=Get-FlatData $bounded; $inventory.ReferenceIndex.MalwareEvents=@($bounded|ForEach-Object{[pscustomobject]@{Id=(Get-ObjectIdValue $_);Name=(Get-Prop $_ @('Name','ObjectName'));Status=(Get-Prop $_ @('Result','Status'))}}) }
+        elseif($cmd -eq 'Get-VBRCertificate'){ $inventory.CertificateMetadata=@($items|ForEach-Object{[pscustomobject]@{Name=(Get-Prop $_ @('Name','FriendlyName','Subject'));Thumbprint=(Get-Prop $_ @('Thumbprint'));NotAfter=(Get-Prop $_ @('NotAfter','ExpirationDate'));Issuer=(Get-Prop $_ @('Issuer'))}}) }
+        else{ $inventory.SecurityCompliance += Get-FlatData $items }
+    }catch{$inventory.Warnings+="${cmd}: $($_.Exception.Message)"}
 }
 
-if ($jobs.Count -gt 0) {
-    try {
-        $inventory.JobConfiguration = @(
-            foreach ($job in $jobs) {
-                $sc = Get-IncExc -Job $job
-                $repo = Get-RepoNameForJob -Job $job
-                $sched = Get-JobScheduleSummary -Job $job
-                $opts = $null
-                try { $opts = $job | Get-VBRJobOptions -ErrorAction Stop } catch { $opts = $null }
-                $ret = Get-RetentionText -Job $job
-                $gfs = if ($opts) { Get-GfsBlock -JobOptions $opts } else { [pscustomobject]@{Weekly='none';Monthly='none';Yearly='none'} }
-                [pscustomobject]@{
-                    Name       = Get-SafeValue { $job.Name }
-                    JobName    = Get-SafeValue { $job.Name }
-                    Type       = Get-SafeValue { $job.JobType }
-                    JobType    = Get-SafeValue { $job.JobType }
-                    Repository = $repo
-                    Retention  = $ret
-                    Schedule   = $sched
-                    Weekly     = $gfs.Weekly
-                    Monthly    = $gfs.Monthly
-                    Yearly     = $gfs.Yearly
-                    Tags       = @($sc.Tags)
-                    Includes   = @($sc.Includes)
-                    Excludes   = @($sc.Excludes)
-                }
-            }
-        )
-        $inventory.JobRetentionPolicies = @(
-            foreach ($row in $inventory.JobConfiguration) {
-                [pscustomobject]@{
-                    JobName    = $row.JobName
-                    JobType    = $row.JobType
-                    Repository = $row.Repository
-                    Retention  = $row.Retention
-                    Source     = "Job options"
-                }
-            }
-        )
-        $inventory.JobGFSSettings = @(
-            foreach ($row in $inventory.JobConfiguration) {
-                [pscustomobject]@{
-                    JobName = $row.JobName
-                    JobType = $row.JobType
-                    Weekly  = $row.Weekly
-                    Monthly = $row.Monthly
-                    Yearly  = $row.Yearly
-                }
-            }
-        )
-    }
-    catch { $inventory.Warnings += "JobConfiguration: $($_.Exception.Message)" }
+if(-not $SkipAudit -and (Test-CmdletExists 'Export-VBRAudit')){
+    try{ $to=Get-Date; $from=$to.AddDays(-1*[math]::Abs($AuditDays)); $tmp=Join-Path ([IO.Path]::GetTempPath()) ("veeam_audit_{0}.txt" -f [guid]::NewGuid().ToString('N')); Export-VBRAudit -From $from -To $to -FileFullPath $tmp; $inventory.Audit=Get-Content -Path $tmp -Raw -ErrorAction SilentlyContinue; Remove-Item -Path $tmp -Force -ErrorAction SilentlyContinue }
+    catch{ $inventory.Warnings += "Audit: $($_.Exception.Message)" }
 }
 
-if (Test-CmdletExists "Get-VBRComputerBackupJob") {
-    try { $inventory.ComputerBackupJobs = Get-FlatData (Get-VBRComputerBackupJob) }
-    catch { $inventory.Warnings += "ComputerBackupJobs: $($_.Exception.Message)" }
-}
+$inventory.AvailableVeeamCmdlets = Get-FlatData (@($availableCmdlets | Sort-Object | ForEach-Object { [pscustomobject]@{Name=$_} }))
 
-if (Test-CmdletExists "Get-VBRBackupCopyJob") {
-    try { $inventory.BackupCopyJobs = Get-FlatData (Get-VBRBackupCopyJob) }
-    catch { $inventory.Warnings += "BackupCopyJobs: $($_.Exception.Message)" }
-}
+[void]$sectionDiagnostics.Add((New-SectionDiagnostic -Section 'JobConfiguration' -SourceCmdlets @('Get-VBRJob','Get-VBRJobOptions') -Status 'ok' -ItemCount @($inventory.JobConfiguration).Count))
+[void]$sectionDiagnostics.Add((New-SectionDiagnostic -Section 'ComputerBackupJobs' -SourceCmdlets @('Get-VBRComputerBackupJob') -Status $(if(Test-CmdletExists 'Get-VBRComputerBackupJob'){'ok'}else{'skipped'}) -ItemCount @($inventory.ComputerBackupJobs).Count))
+[void]$sectionDiagnostics.Add((New-SectionDiagnostic -Section 'RecentBackupSessions' -SourceCmdlets @('Get-VBRBackupSession') -Status $(if(Test-CmdletExists 'Get-VBRBackupSession'){'ok'}else{'skipped'}) -ItemCount @($inventory.RecentBackupSessions).Count))
+[void]$sectionDiagnostics.Add((New-SectionDiagnostic -Section 'RecentTaskSessions' -SourceCmdlets @('Get-VBRTaskSession') -Status $(if(Test-CmdletExists 'Get-VBRTaskSession'){'ok'}else{'skipped'}) -ItemCount @($inventory.RecentTaskSessions).Count))
+[void]$sectionDiagnostics.Add((New-SectionDiagnostic -Section 'Security' -SourceCmdlets @('Get-VBRMalwareDetectionEvent','Get-VBRMalwareDetectionOptions','Get-VBRSecurityComplianceAnalyzerResult','Get-VBRCertificate') -Status 'ok' -ItemCount (@($inventory.MalwareDetectionEvents).Count + @($inventory.SecurityCompliance).Count + @($inventory.CertificateMetadata).Count)))
+[void]$sectionDiagnostics.Add((New-SectionDiagnostic -Section 'TapeInfrastructure' -SourceCmdlets @('Get-VBRTapeServer','Get-VBRTapeLibrary','Get-VBRTapeDrive','Get-VBRTapeMediaPool') -Status $(if(Test-CmdletExists 'Get-VBRTapeServer'){'ok'}else{'skipped'}) -ItemCount @($inventory.TapeInfrastructure).Count))
+$inventory.SectionDiagnostics=@($sectionDiagnostics)
+$inventory.TextReportPath = Write-TextReport -JobRows $inventory.JobConfiguration -Path $TextOutputFile
 
-if (Test-CmdletExists "Get-VBRSureBackupJob") {
-    try { $inventory.SureBackupJobs = Get-FlatData (Get-VBRSureBackupJob) }
-    catch { $inventory.Warnings += "SureBackupJobs: $($_.Exception.Message)" }
-}
-
-if (Test-CmdletExists "Get-VBRTapeJob") {
-    try { $inventory.TapeJobs = Get-FlatData (Get-VBRTapeJob) }
-    catch { $inventory.Warnings += "TapeJobs: $($_.Exception.Message)" }
-}
-
-if (Test-CmdletExists "Get-VBRBackupSession") {
-    try {
-        $inventory.RecentBackupSessions = Get-FlatData (
-            Get-VBRBackupSession | Sort-Object EndTime -Descending | Select-Object -First 200
-        )
-    }
-    catch { $inventory.Warnings += "RecentBackupSessions: $($_.Exception.Message)" }
-}
-
-try { $inventory.BackupVersions = @(Get-BackupVersionRows) }
-catch { $inventory.Warnings += "BackupVersions: $($_.Exception.Message)" }
-
-try { $inventory.VBRLicensing = @(Get-VbrLicensingRows) }
-catch { $inventory.Warnings += "VBRLicensing: $($_.Exception.Message)" }
-
-try { $inventory.SobrOffloadStats = @(Get-SobrOffloadRows) }
-catch { $inventory.Warnings += "SobrOffloadStats: $($_.Exception.Message)" }
-
-if (Test-CmdletExists "Get-VBRLinuxPackage") {
-    try { $inventory.LinuxPackages = Get-FlatData (Get-VBRLinuxPackage) }
-    catch { $inventory.Warnings += "LinuxPackages: $($_.Exception.Message)" }
-}
-
-try {
-    $inventory.AvailableVeeamCmdlets = Get-FlatData (
-        Get-Command -Module Veeam.Backup.PowerShell |
-        Sort-Object Name |
-        Select-Object Name, CommandType, Version, Source
-    )
-}
-catch { $inventory.Warnings += "AvailableVeeamCmdlets: $($_.Exception.Message)" }
-
-if (-not $SkipAudit -and (Test-CmdletExists "Export-VBRAudit")) {
-    try {
-        $maxAuditDate = [datetime]'2025-12-31T00:00:00'
-        $now = Get-Date
-        $to = if ($now -gt $maxAuditDate) { $maxAuditDate } else { $now }
-        $from = $to.AddDays(-1 * [math]::Abs($AuditDays))
-
-        $tmpAudit = Join-Path ([System.IO.Path]::GetTempPath()) ("veeam_audit_{0}.txt" -f [guid]::NewGuid().ToString("N"))
-        Export-VBRAudit -From $from -To $to -FileFullPath $tmpAudit
-        $inventory.Audit = Get-Content -Path $tmpAudit -Raw -ErrorAction SilentlyContinue
-        Remove-Item -Path $tmpAudit -Force -ErrorAction SilentlyContinue
-    }
-    catch { $inventory.Warnings += "Audit: $($_.Exception.Message)" }
-}
-
-try {
-    $inventory.TextReportPath = Write-CombinedTextReport -Jobs $jobs -Path $TextOutputFile -DefinedRepositories $inventory.DefinedRepositories -CapacityTierUtilisation $inventory.CapacityTierUtilisation -BackupVersions $inventory.BackupVersions -VBRLicensing $inventory.VBRLicensing -SobrOffloadStats $inventory.SobrOffloadStats
-}
-catch { $inventory.Warnings += "TextReport: $($_.Exception.Message)" }
-
-$json = $inventory | ConvertTo-Json -Depth 16
-$fullOutputPath = [System.IO.Path]::GetFullPath($OutputFile)
-$outputDir = [System.IO.Path]::GetDirectoryName($fullOutputPath)
-if ($outputDir -and -not [System.IO.Directory]::Exists($outputDir)) {
-    [System.IO.Directory]::CreateDirectory($outputDir) | Out-Null
-}
+$json=$inventory | ConvertTo-Json -Depth 16
+$fullOutputPath=[IO.Path]::GetFullPath($OutputFile); $outputDir=[IO.Path]::GetDirectoryName($fullOutputPath); if($outputDir -and -not [IO.Directory]::Exists($outputDir)){ [IO.Directory]::CreateDirectory($outputDir) | Out-Null }
 $json | Set-Content -Path $fullOutputPath -Encoding UTF8
-
-Write-Host ""
-Write-Host "Combined JSON written to:"
-Write-Host "  $fullOutputPath"
-if ($inventory.TextReportPath) {
-    Write-Host "Text report written to:"
-    Write-Host "  $($inventory.TextReportPath)"
-}
-Write-Host ""
+Write-Host "Combined JSON written to: $fullOutputPath"
+if($inventory.TextReportPath){ Write-Host "Text report written to: $($inventory.TextReportPath)" }
 </script>
 <script>
 (function(){
 'use strict';
-const APP_VERSION='0.5.1';
+const APP_VERSION='0.6.0';
 const SAMPLE=`====================================================================================================
-Job:  SQL_Daily_Backup
+Job:  Generic_Primary_Backup
 Type: Backup
 ====================================================================================================
-Repository : SOBR_SQL_Repos
-Retention  : 7 days
-Schedule   : Active=True; Mode=Daily; Start=07/02/2026 02:00:00; RetryTimes=3; RetryTimeout=10; ResumeMissed=False; WaitForCompletion=True
-
-GFS:
-  Weekly  : DesiredTime=Sunday; IsEnabled=True; KeepBackupsForNumberOfWeeks=4
-  Monthly : DesiredTime=First; IsEnabled=True; KeepBackupsForNumberOfMonths=2
-  Yearly  : none
-
-Tags:
-  - none
-
-Includes:
-  + DC-VSQLTEST01
-
-Excludes:
-  - none
-
-====================================================================================================
-Job:  VMware_Daily_Backup
-Type: Backup
-====================================================================================================
-Repository : SOBR_VMware_Repos
+Repository : Primary_Repo_A
 Retention  : 14 restore points
-Schedule   : Active=True; Mode=Daily; Start=05/02/2026 22:00:00; RetryTimes=3; RetryTimeout=10; ResumeMissed=False; WaitForCompletion=True
+Schedule   : Active=True; Mode=Daily; Start=2026-08-01 22:00:00; RetryTimes=3; RetryTimeout=10; ResumeMissed=False; WaitForCompletion=True
 
 GFS:
-  Weekly  : DesiredTime=Sunday; IsEnabled=True; KeepBackupsForNumberOfWeeks=4
-  Monthly : DesiredTime=First; IsEnabled=True; KeepBackupsForNumberOfMonths=2
+  Weekly  : IsEnabled=True; Weeks=4
+  Monthly : IsEnabled=True; Months=3
+  Yearly  : none
+
+Tags:
+  - Production
+
+Includes:
+  + Workload-A
+
+Excludes:
+  - none
+
+====================================================================================================
+Job:  Generic_Secondary_Copy
+Type: BackupSync
+====================================================================================================
+Repository : Capacity_Repo_B
+Retention  : 30 days
+Schedule   : Active=True; Mode=Periodically; Start=2026-08-01 01:00:00; RetryTimes=2; RetryTimeout=15; ResumeMissed=True; WaitForCompletion=False
+
+GFS:
+  Weekly  : none
+  Monthly : none
   Yearly  : none
 
 Tags:
   - none
 
 Includes:
-  + Backup_VM
+  + Workload-B
 
 Excludes:
-  - none
+  - Scope/Test
 `;
 const els={
   input:document.getElementById('input'),search:document.getElementById('search'),jobs:document.getElementById('jobs'),
   statJobs:document.getElementById('statJobs'),statGfs:document.getElementById('statGfs'),statActive:document.getElementById('statActive'),topRepos:document.getElementById('topRepos'),
   fileInput:document.getElementById('fileInput'),downloadCmd:document.getElementById('downloadCmd'),downloadDocx:document.getElementById('downloadDocx'),loadSample:document.getElementById('loadSample'),copyRaw:document.getElementById('copyRaw'),clearAll:document.getElementById('clearAll'),
-  customerName:document.getElementById('customerName'),serverName:document.getElementById('serverName'),jobFilter:document.getElementById('jobFilter'),auditDays:document.getElementById('auditDays'),skipAudit:document.getElementById('skipAudit'),outputDir:document.getElementById('outputDir'),outputFile:document.getElementById('outputFile'),textFile:document.getElementById('textFile'),cmdStatus:document.getElementById('cmdStatus'),parseStatus:document.getElementById('parseStatus')
+  customerName:document.getElementById('customerName'),serverName:document.getElementById('serverName'),jobFilter:document.getElementById('jobFilter'),auditDays:document.getElementById('auditDays'),skipAudit:document.getElementById('skipAudit'),outputDir:document.getElementById('outputDir'),outputFile:document.getElementById('outputFile'),textFile:document.getElementById('textFile'),cmdStatus:document.getElementById('cmdStatus'),parseStatus:document.getElementById('parseStatus'),overviewStats:document.getElementById('overviewStats'),sectionFilter:document.getElementById('sectionFilter'),sectionDiagnostics:document.getElementById('sectionDiagnostics')
 };
 let parsedJobs=[];
 let importedData=null;
+let expandedSearchText='';
 function collectorSource(){return document.getElementById('collectorSource').textContent.replace(/^\n/,'').replace(/\n$/,'');}
 function escapeHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
 function safeStr(v){if(v==null)return '';if(Array.isArray(v))return v.map(safeStr).filter(Boolean).join(', ');if(typeof v==='object'){try{return JSON.stringify(v);}catch(err){return String(v);}}return String(v);}
@@ -1642,10 +448,13 @@ function isActive(j){return String((j.scheduleKv||{}).Active||'').toLowerCase()=
 function activePill(v){const a=String(v||'').toLowerCase();if(a==='true')return{text:'Active',cls:'pill good'};if(a==='false')return{text:'Disabled',cls:'pill none'};return{text:'Unknown',cls:'pill warn'};}
 function scheduleBadge(mode){const m=String(mode||'none');return{text:'Mode: '+m,cls:m==='none'?'pill none':'pill good'};}
 function chip(item){const cls=String(item).toLowerCase()==='none'?'chip none':'chip';return '<span class="'+cls+'">'+escapeHtml(item)+'</span>';}
+function buildExpandedSearchText(data){if(!data||typeof data!=='object')return'';const parts=[];for(const key of ['Metadata','Compatibility','SectionDiagnostics','Warnings','CommandDiscovery','ReferenceIndex']){if(data[key]!=null){try{parts.push(JSON.stringify(data[key]));}catch(err){parts.push(String(data[key]));}}}return parts.join(' | ').toLowerCase();}
+function sectionDiagnosticsRows(data){return asArray(data&&data.SectionDiagnostics).filter(x=>x&&typeof x==='object');}
+function renderOverview(data,filterText){if(!data){els.overviewStats.innerHTML='<span class="chip none">No report imported yet.</span>';els.sectionDiagnostics.innerHTML='';return;}const meta=data.Metadata||{};const diags=sectionDiagnosticsRows(data);const q=String(filterText||'').trim().toLowerCase();const shown=!q?diags:diags.filter(d=>[d.Section,safeStr(d.SourceCmdlets),d.Status,d.Message,d.ItemCount].join(' | ').toLowerCase().includes(q));const hasCompatField=!!(data.Compatibility&&Object.prototype.hasOwnProperty.call(data.Compatibility,'VBRServerSessionConnected'));const compat=!hasCompatField?'Unknown':(data.Compatibility.VBRServerSessionConnected?'Connected':'Disconnected');els.overviewStats.innerHTML=[`Schema: ${safeStr(meta.SchemaVersion||'unknown')}`,`Collector: ${safeStr(meta.CollectorVersion||APP_VERSION)}`,`PS: ${safeStr(meta.PSVersion||'unknown')}`,`V130 cmds: ${safeStr(data.Compatibility&&data.Compatibility.V130CommandCount||0)}`,`Session: ${compat}`,`Warnings: ${asArray(data.Warnings).length}`].map(v=>'<span class="chip">'+escapeHtml(v)+'</span>').join('');els.sectionDiagnostics.innerHTML=shown.length?shown.slice(0,120).map(d=>'<span class="chip '+(String(d.Status||'').toLowerCase()==='error'?'none':'')+'">'+escapeHtml(`${safeStr(d.Section)} | ${safeStr(d.Status)} | items=${safeStr(d.ItemCount)} | cmdlets=${safeStr(d.SourceCmdlets)}${d.Message?` | ${safeStr(d.Message)}`:''}`)+'</span>').join(''):'<span class="chip none">No section diagnostics found.</span>'; }
 function renderSummary(jobs){els.statJobs.textContent=jobs.length;els.statGfs.textContent=jobs.filter(hasAnyGfs).length;els.statActive.textContent=jobs.filter(isActive).length;const byRepo=new Map();jobs.forEach(j=>byRepo.set(j.repository,(byRepo.get(j.repository)||0)+1));const top=[...byRepo.entries()].sort((a,b)=>b[1]-a[1]).slice(0,6);els.topRepos.innerHTML=top.length?top.map(([r,c])=>'<span class="chip">'+escapeHtml(r)+' - '+c+'</span>').join(''):'<span class="chip none">none</span>';els.downloadDocx.disabled=!jobs.length&&!importedData;}
-function renderJobs(jobs,query){const q=String(query||'').trim().toLowerCase();const filtered=!q?jobs:jobs.filter(j=>[j.name,j.type,j.repository,j.retention,j.scheduleRaw,j.gfs.weekly,j.gfs.monthly,j.gfs.yearly,...j.includes,...j.excludes].join(' | ').toLowerCase().includes(q));if(!filtered.length){els.jobs.innerHTML='<div class="empty">No jobs matched your search.</div>';return;}els.jobs.innerHTML=filtered.map(j=>{const skv=j.scheduleKv||{},act=activePill(skv.Active),mode=scheduleBadge(skv.Mode),gw=j.gfsTidy.weekly,gm=j.gfsTidy.monthly,gy=j.gfsTidy.yearly;const rows=[];[['Mode',skv.Mode],['Start',skv.Start],['Retry times',skv.RetryTimes],['Retry timeout',skv.RetryTimeout],['Resume missed',skv.ResumeMissed],['Wait completion',skv.WaitForCompletion],['After job',skv.AfterJob],['Days',skv.Days],['Every',skv.Every]].forEach(([k,v])=>{if(v!=null&&v!=='')rows.push('<div class="k">'+escapeHtml(k)+':</div><div class="v">'+escapeHtml(v)+'</div>');});if(!rows.length)rows.push('<div class="k">Schedule:</div><div class="v">'+escapeHtml(j.scheduleRaw)+'</div>');function gfs(label,g){return '<div class="gfsRow"><div class="gfsHead"><span>'+label+'</span><span class="'+(g.active==='Yes'?'pill good':'pill none')+'">'+(g.active==='Yes'?'Active':'Inactive')+'</span></div><div class="kv"><div class="k">Time:</div><div class="v">'+escapeHtml(g.time)+'</div><div class="k">'+escapeHtml(g.countLabel)+':</div><div class="v">'+escapeHtml(g.countValue)+'</div></div></div>';}
+function renderJobs(jobs,query){const q=String(query||'').trim().toLowerCase();const filtered=!q?jobs:jobs.filter(j=>[j.name,j.type,j.repository,j.retention,j.scheduleRaw,j.gfs.weekly,j.gfs.monthly,j.gfs.yearly,...j.includes,...j.excludes,expandedSearchText].join(' | ').toLowerCase().includes(q));if(!filtered.length){els.jobs.innerHTML='<div class="empty">No jobs matched your search.</div>';return;}els.jobs.innerHTML=filtered.map(j=>{const skv=j.scheduleKv||{},act=activePill(skv.Active),mode=scheduleBadge(skv.Mode),gw=j.gfsTidy.weekly,gm=j.gfsTidy.monthly,gy=j.gfsTidy.yearly;const rows=[];[['Mode',skv.Mode],['Start',skv.Start],['Retry times',skv.RetryTimes],['Retry timeout',skv.RetryTimeout],['Resume missed',skv.ResumeMissed],['Wait completion',skv.WaitForCompletion],['After job',skv.AfterJob],['Days',skv.Days],['Every',skv.Every]].forEach(([k,v])=>{if(v!=null&&v!=='')rows.push('<div class="k">'+escapeHtml(k)+':</div><div class="v">'+escapeHtml(v)+'</div>');});if(!rows.length)rows.push('<div class="k">Schedule:</div><div class="v">'+escapeHtml(j.scheduleRaw)+'</div>');function gfs(label,g){return '<div class="gfsRow"><div class="gfsHead"><span>'+label+'</span><span class="'+(g.active==='Yes'?'pill good':'pill none')+'">'+(g.active==='Yes'?'Active':'Inactive')+'</span></div><div class="kv"><div class="k">Time:</div><div class="v">'+escapeHtml(g.time)+'</div><div class="k">'+escapeHtml(g.countLabel)+':</div><div class="v">'+escapeHtml(g.countValue)+'</div></div></div>';}
 const detail=`Repository : ${j.repository}\nRetention  : ${j.retention}\nSchedule   : ${j.scheduleRaw}\n\nGFS:\n  Weekly  : ${j.gfs.weekly}\n  Monthly : ${j.gfs.monthly}\n  Yearly  : ${j.gfs.yearly}\n\nTags:\n  - ${j.tags.join('\n  - ')}\n\nIncludes:\n  + ${j.includes.join('\n  + ')}\n\nExcludes:\n  - ${j.excludes.join('\n  - ')}`;return '<article class="jobCard"><div class="jobHead"><div class="jobTitle"><div class="name">'+escapeHtml(j.name)+'</div><div class="badges"><span class="badge">'+escapeHtml(j.type||'(unknown)')+'</span><span class="badge primary">Repo: '+escapeHtml(j.repository)+'</span><span class="badge">Retention: '+escapeHtml(j.retention)+'</span><span class="'+mode.cls+'">'+escapeHtml(mode.text)+'</span><span class="'+act.cls+'">'+escapeHtml(act.text)+'</span></div></div></div><div class="jobBody"><div class="miniCard"><h3>Schedule</h3><div class="kv">'+rows.join('')+'</div></div><div class="miniCard"><h3>GFS</h3><div class="gfsGrid">'+gfs('Weekly',gw)+gfs('Monthly',gm)+gfs('Yearly',gy)+'</div></div><div class="miniCard scope"><h3>Scope</h3><div class="muted" style="font-size:12px">Includes</div><div class="chips" style="margin-top:7px">'+j.includes.map(chip).join('')+'</div><div class="muted" style="font-size:12px;margin-top:12px">Excludes</div><div class="chips" style="margin-top:7px">'+j.excludes.map(chip).join('')+'</div></div></div><details><summary>Details</summary><pre>'+escapeHtml(detail)+'</pre></details></article>';}).join('');}
-function refresh(){const parsed=parseInput(els.input.value);parsedJobs=parsed.jobs;importedData=parsed.data;renderSummary(parsedJobs);renderJobs(parsedJobs,els.search.value);if(els.input.value.trim()&&!parsedJobs.length&&importedData)showStatus(els.parseStatus,'Parsed repository/capacity sections, but no job records were found.',true);else if(els.input.value.trim()&&!parsedJobs.length)showStatus(els.parseStatus,'No job records found. Import the combined JSON or the text sidecar produced by the CMD.',false);else if(parsedJobs.length)showStatus(els.parseStatus,'Parsed '+parsedJobs.length+' job(s) from '+(parsed.format==='json'?'combined JSON.':'text output.'),true);else clearStatus(els.parseStatus);}
+function refresh(){const parsed=parseInput(els.input.value);parsedJobs=parsed.jobs;importedData=parsed.data;expandedSearchText=buildExpandedSearchText(importedData);renderSummary(parsedJobs);renderOverview(importedData,els.sectionFilter.value);renderJobs(parsedJobs,els.search.value);if(els.input.value.trim()&&!parsedJobs.length&&importedData)showStatus(els.parseStatus,'Parsed repository/capacity sections, but no job records were found.',true);else if(els.input.value.trim()&&!parsedJobs.length)showStatus(els.parseStatus,'No job records found. Import the combined JSON or the text sidecar produced by the CMD.',false);else if(parsedJobs.length)showStatus(els.parseStatus,'Parsed '+parsedJobs.length+' job(s) from '+(parsed.format==='json'?'combined JSON.':'text output.'),true);else clearStatus(els.parseStatus);}
 function truncate(text,max){const s=safeStr(text).replace(/\s+/g,' ').trim();return s.length>max?s.slice(0,max-3)+'...':s;}
 function x(s){return safeStr(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
 function wText(text,opts={}){const pr=[];if(opts.bold)pr.push('<w:b/>');if(opts.italic)pr.push('<w:i/>');pr.push('<w:sz w:val="'+(opts.size?Math.round(opts.size*2):17)+'"/>');return '<w:r><w:rPr>'+pr.join('')+'</w:rPr><w:t xml:space="preserve">'+x(text)+'</w:t></w:r>';}
@@ -1672,12 +481,13 @@ function capacityTotalRows(data){const totals=asArray(data&&data.CapacityTierUti
 function backupVersionRows(data){return rows(data,'BackupVersions').map(r=>({'Machine':safeStr(firstPath(r,['Machine','machine'])),'Job':safeStr(firstPath(r,['JobName','Job','job_name'])),'Total RPs':safeStr(firstPath(r,['TotalRestorePoints','Total_Restore_Points','Total Restore Points'])),'Performance RPs':safeStr(firstPath(r,['PerformanceRestorePoints','Performance_Restore_Points','Performance Restore Points'])),'Capacity RPs':safeStr(firstPath(r,['CapacityRestorePoints','Capacity_Restore_Points','Capacity Restore Points']))}));}
 function licensingRows(data){return rows(data,'VBRLicensing').map(r=>({'Source':safeStr(firstPath(r,['SourceCmdlet'])),'Name':safeStr(firstPath(r,['Name'])),'Edition':safeStr(firstPath(r,['Edition'])),'Status':safeStr(firstPath(r,['Status'])),'Expiration':safeStr(firstPath(r,['Expiration'])),'Licensed':safeStr(firstPath(r,['Licensed'])),'Used':safeStr(firstPath(r,['Used'])),'Details':safeStr(firstPath(r,['Details']))}));}
 function offloadRows(data){return rows(data,'SobrOffloadStats').map(r=>({'Source':safeStr(firstPath(r,['SourceCmdlet'])),'Name':safeStr(firstPath(r,['Name'])),'Type':safeStr(firstPath(r,['Type'])),'State':safeStr(firstPath(r,['State'])),'Result':safeStr(firstPath(r,['Result'])),'Start':safeStr(firstPath(r,['StartTime'])),'End':safeStr(firstPath(r,['EndTime'])),'Details':safeStr(firstPath(r,['Details']))}));}
+function diagnosticsRows(data){return rows(data,'SectionDiagnostics').map(r=>({'Section':safeStr(firstPath(r,['Section'])),'Status':safeStr(firstPath(r,['Status'])),'Items':safeStr(firstPath(r,['ItemCount'])),'Cmdlets':safeStr(firstPath(r,['SourceCmdlets'])),'Message':safeStr(firstPath(r,['Message']))}));}
 function rawSectionParagraphs(data,key){const raw=data&&data.RawSections&&data.RawSections[key];if(!raw)return'';let out='';const text=String(raw).trim();for(let i=0;i<text.length;i+=1800)out+=paragraph(text.slice(i,i+1800),{size:7.5,after:40});return out;}
 function reportBody(){
 const cfg=readConfig(),now=new Date(),data=importedData||{};
 const repos=new Set(parsedJobs.map(j=>j.repository).filter(r=>r&&r.toLowerCase()!=='none'));
 const active=parsedJobs.filter(isActive).length;
-const defined=definedRepoRows(data),capacity=capacityTierRows(data),capacityTotals=capacityTotalRows(data),versions=backupVersionRows(data),licenses=licensingRows(data),offloads=offloadRows(data);
+const defined=definedRepoRows(data),capacity=capacityTierRows(data),capacityTotals=capacityTotalRows(data),versions=backupVersionRows(data),licenses=licensingRows(data),offloads=offloadRows(data),diags=diagnosticsRows(data);
 let p='';
 if(cfg.customerName)p+=paragraph(cfg.customerName.toUpperCase(),{align:'center',bold:true,size:11,after:80});
 p+=paragraph('Veeam Backup & Replication\nCombined Configuration Report',{align:'center',bold:true,size:20,after:120});
@@ -1699,7 +509,7 @@ p+=kvTable([
 ['Hyper-V Proxies',String(countItems(data,'HvProxies'))],
 ['Credentials',String(countItems(data,'CredentialsMetadataOnly'))],
 ['Jobs with GFS',String(parsedJobs.filter(hasAnyGfs).length)],
-['Source Format',importedData?(data.RawSections?'Veeam text output with extra sections':'Combined JSON'):'Veeam PowerShell text output']
+['Section diagnostics',String(diags.length)],['Source Format',importedData?(data.RawSections?'Veeam text output with extra sections':'Combined JSON'):'Veeam PowerShell text output']
 ]);
 p+=heading('2. Backup Jobs',1);
 p+=tableXml(docRows(),['Job Name','Type','Repository','Retention','Schedule'],{max:130,widths:[2.4,1,2,1.2,2.7]});
@@ -1736,6 +546,10 @@ if(importedData){
   if(offloads.length)p+=tableXml(offloads,['Source','Name','Type','State','Result','Start','End','Details'],{max:90,widths:[1.2,1.8,1.4,.8,.8,1.1,1.1,2.2],size:6.8});
   else if(offloadRaw)p+=offloadRaw;
   else p+=paragraph('No SOBR offload rows found.',{size:8.5,after:80});
+  p+=heading('Collector diagnostics',2);
+  if(diags.length)p+=tableXml(diags,['Section','Status','Items','Cmdlets','Message'],{max:120,widths:[1.6,.8,.6,2.8,2.8],size:6.8});
+  else p+=paragraph('No section diagnostics found in imported data.',{size:8.5,after:80});
+
   p+=heading('8. Original Inventory Queries',1);
   p+=heading('Infrastructure',2);
   p+=tableXml(pickRows(rows(data,'Servers'),['Name','Type','Info','IsUnavailable','ApiVersion']),['Name','Type','Info','IsUnavailable','ApiVersion'],{max:100,widths:[1.8,1,2.5,.9,.9]});
@@ -1771,7 +585,7 @@ function concat(arrays){const len=arrays.reduce((a,b)=>a+b.length,0),out=new Uin
 function zipStore(entries){const enc=new TextEncoder(),locals=[],centrals=[];let offset=0;for(const [name,text] of entries){const nb=enc.encode(name),data=enc.encode(text),crc=crc32(data),flags=0x0800;const local=concat([new Uint8Array([0x50,0x4b,0x03,0x04]),new Uint8Array(u16(20)),new Uint8Array(u16(flags)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u32(crc)),new Uint8Array(u32(data.length)),new Uint8Array(u32(data.length)),new Uint8Array(u16(nb.length)),new Uint8Array(u16(0)),nb,data]);locals.push(local);const central=concat([new Uint8Array([0x50,0x4b,0x01,0x02]),new Uint8Array(u16(20)),new Uint8Array(u16(20)),new Uint8Array(u16(flags)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u32(crc)),new Uint8Array(u32(data.length)),new Uint8Array(u32(data.length)),new Uint8Array(u16(nb.length)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u32(0)),new Uint8Array(u32(offset)),nb]);centrals.push(central);offset+=local.length;}const cd=concat(centrals),body=concat(locals),end=concat([new Uint8Array([0x50,0x4b,0x05,0x06]),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(entries.length)),new Uint8Array(u16(entries.length)),new Uint8Array(u32(cd.length)),new Uint8Array(u32(body.length)),new Uint8Array(u16(0))]);return concat([body,cd,end]);}
 function generateDocx(){const entries=[['[Content_Types].xml',contentTypesXml()],['_rels/.rels',relsXml()],['docProps/core.xml',coreXml()],['docProps/app.xml',appXml()],['word/document.xml',documentXml()],['word/styles.xml',stylesXml()],['word/_rels/document.xml.rels',docRelsXml()],['word/header1.xml',headerXml()],['word/footer1.xml',footerXml()]];return new Blob([zipStore(entries)],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});}
 function downloadDocx(){if(!parsedJobs.length&&!importedData)return;const cfg=readConfig(),date=new Date().toISOString().slice(0,10).replace(/-/g,'');downloadBlob(generateDocx(),'Veeam_Combined_Report_'+safeLabel(cfg.customerName||'Customer','Customer')+'_'+date+'.docx');}
-els.input.addEventListener('input',refresh);els.search.addEventListener('input',()=>renderJobs(parsedJobs,els.search.value));els.downloadCmd.addEventListener('click',downloadCmd);els.downloadDocx.addEventListener('click',downloadDocx);els.loadSample.addEventListener('click',()=>{els.input.value=SAMPLE;refresh();});els.clearAll.addEventListener('click',()=>{els.input.value='';els.search.value='';els.fileInput.value='';refresh();});els.copyRaw.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(els.input.value||'');showStatus(els.parseStatus,'Raw output copied.',true);}catch(err){window.prompt('Copy raw output:',els.input.value||'');}});els.fileInput.addEventListener('change',()=>{const f=els.fileInput.files&&els.fileInput.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{els.input.value=String(r.result||'');refresh();};r.onerror=()=>showStatus(els.parseStatus,'Could not read file: '+(r.error&&r.error.message?r.error.message:'unknown error'),false);r.readAsText(f);});
+els.input.addEventListener('input',refresh);els.search.addEventListener('input',()=>renderJobs(parsedJobs,els.search.value));els.sectionFilter.addEventListener('input',()=>renderOverview(importedData,els.sectionFilter.value));els.downloadCmd.addEventListener('click',downloadCmd);els.downloadDocx.addEventListener('click',downloadDocx);els.loadSample.addEventListener('click',()=>{els.input.value=SAMPLE;refresh();});els.clearAll.addEventListener('click',()=>{els.input.value='';els.search.value='';els.fileInput.value='';refresh();});els.copyRaw.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(els.input.value||'');showStatus(els.parseStatus,'Raw output copied.',true);}catch(err){window.prompt('Copy raw output:',els.input.value||'');}});els.fileInput.addEventListener('change',()=>{const f=els.fileInput.files&&els.fileInput.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{els.input.value=String(r.result||'');refresh();};r.onerror=()=>showStatus(els.parseStatus,'Could not read file: '+(r.error&&r.error.message?r.error.message:'unknown error'),false);r.readAsText(f);});
 els.input.value=SAMPLE;refresh();
 })();
 </script>
