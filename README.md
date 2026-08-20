@@ -1,44 +1,54 @@
 # VeeamStorageTools
 
-Self-contained browser helper for Veeam Backup & Replication job configuration reports.
+Self-contained offline browser tool for Veeam Backup & Replication reporting.
 
-Current version: `0.4.0`
+Current version: `0.6.0` (VBR v13 focused)
+
+## What changed for VBR v13
+
+- Collector/runtime guidance updated for Veeam console environments (Windows PowerShell 5.1 first; PowerShell 7 optional when the Veeam module is available).
+- Uses guarded cmdlet discovery (`Get-VBRCommand -V130` when available plus module command discovery).
+- Adds section diagnostics so unsupported/edition-limited cmdlets produce per-section warnings instead of aborting the full report.
+- Adds an explicit reference index (IDs/object references) for jobs, backups, repositories, servers, proxies, protection groups, credentials metadata, tape entities, and malware events when available.
+- Expands read-only inventory coverage across infrastructure, repositories/SOBR/capacity, jobs/job configuration, sessions, restore-point summaries, licensing, security, tape, and compatibility metadata.
 
 ## Workflow
 
-1. Open `index.html` in a modern browser or use the OpenClaw dashboard route.
-2. Enter the customer name, VBR server, optional Veeam job filter, audit options, output directory, JSON filename, and text sidecar filename.
-3. Download the generated Windows `.cmd` file.
-4. Run the `.cmd` on the Veeam Backup & Replication server.
-5. Import the generated `veeam_combined_report.json` output back into the browser page. The generated `veeam_job_report.txt` sidecar can also be imported.
-6. Review the parsed jobs and download the generated `.docx` report.
+1. Open `/home/runner/work/VeeamStorageTools/VeeamStorageTools/index.html` in a modern browser.
+2. Enter customer/server/filter/audit/output settings.
+3. Download the generated Windows `.cmd` wrapper.
+4. Run the `.cmd` on the VBR server.
+5. Import generated `veeam_combined_report.json` (or text sidecar) into the page.
+6. Review jobs + diagnostics + summary sections and optionally download the DOCX.
 
-## Collector
+## Safety and privacy
 
-The generated CMD embeds a merged readable PowerShell collector. It keeps the original `index.html` inventory queries and adds the newer `veeam_tools.html` job configuration queries for repository, retention, schedule, GFS, tags, includes, and excludes.
+- Collector is **read-only**: no start/stop/set/add/remove/install/update/sync operations are used for inventory collection.
+- Bounded/high-volume queries are constrained by `Audit days` and explicit limits for sessions/task sessions/restore point summaries.
+- Credentials are metadata-only inventory (no passwords/private keys/tokens).
+- Report excludes secret material by design (only IDs/names/types/status/non-secret metadata).
 
-The collector writes:
+## Coverage highlights
 
-- `veeam_combined_report.json` with the original inventory sections plus enhanced `JobConfiguration`, `JobRetentionPolicies`, and `JobGFSSettings`.
-- `veeam_job_report.txt` in the human-readable job format used by the newer viewer/parser.
+Best-effort, cmdlet-gated collection includes:
 
-## Report
+- Server/module/compatibility metadata and command discovery
+- Infrastructure and managed servers
+- Repositories, SOBRs, performance/capacity extents, and capacity snapshots
+- Job families and job configuration (retention, schedule, GFS, scope)
+- Computer backup jobs (for Agent-policy direction in v13), backup copy, SureBackup, tape jobs
+- Recent backup/task sessions (bounded)
+- Backup/restore-point summary rows (bounded)
+- Licensing summaries
+- Security/malware/compliance/certificate metadata when supported
+- Tape infrastructure metadata when supported
 
-The DOCX is generated locally in the browser. It includes:
+## Limitations
 
-- Executive summary
-- Backup jobs
-- Schedule details
-- Retention and GFS settings
-- Scope includes/excludes
-- Repository summary
-- Original inventory query sections when combined JSON is imported
-- Raw collector output appendix
+- Output is edition/license/workload dependent; unsupported cmdlets are reported in section diagnostics.
+- Some optional sections require feature-specific cmdlets present on the target VBR server.
+- Final validation still requires execution against a live VBR v13 environment with representative licensed features.
 
-All generated Word tables are left justified and use fixed-width landscape layout to avoid flowing off the right side of the page.
+## Report generation
 
-## Notes
-
-- The app is static and has no backend.
-- Combined JSON/text import and DOCX generation happen locally in the browser.
-- Python, `python-docx`, and XLSX generation are no longer required.
+DOCX is generated locally in-browser with fixed-width landscape tables and truncation controls for large datasets.
