@@ -71,7 +71,6 @@ button:hover{border-color:rgba(96,165,250,.55);background:rgba(96,165,250,.12)}b
         <button id="downloadDocx" class="good" type="button" disabled>Download DOCX</button>
       </div>
       <div class="note warn">Run the generated CMD on the Veeam Backup &amp; Replication server. It writes the merged PowerShell collector to disk, runs the original inventory queries plus the newer job configuration queries, and writes JSON plus a text sidecar for import here.</div>
-      <div><label>Collector SHA256</label><pre id="collectorHash" style="max-height:none"></pre></div>
       <div id="cmdStatus" class="status"></div>
     </div>
   </aside>
@@ -865,7 +864,7 @@ const els={
   input:document.getElementById('input'),search:document.getElementById('search'),jobs:document.getElementById('jobs'),
   statJobs:document.getElementById('statJobs'),statGfs:document.getElementById('statGfs'),statActive:document.getElementById('statActive'),topRepos:document.getElementById('topRepos'),
   fileInput:document.getElementById('fileInput'),downloadCmd:document.getElementById('downloadCmd'),downloadDocx:document.getElementById('downloadDocx'),loadSample:document.getElementById('loadSample'),copyRaw:document.getElementById('copyRaw'),clearAll:document.getElementById('clearAll'),
-  customerName:document.getElementById('customerName'),serverName:document.getElementById('serverName'),jobFilter:document.getElementById('jobFilter'),auditDays:document.getElementById('auditDays'),skipAudit:document.getElementById('skipAudit'),outputDir:document.getElementById('outputDir'),outputFile:document.getElementById('outputFile'),textFile:document.getElementById('textFile'),collectorHash:document.getElementById('collectorHash'),cmdStatus:document.getElementById('cmdStatus'),parseStatus:document.getElementById('parseStatus')
+  customerName:document.getElementById('customerName'),serverName:document.getElementById('serverName'),jobFilter:document.getElementById('jobFilter'),auditDays:document.getElementById('auditDays'),skipAudit:document.getElementById('skipAudit'),outputDir:document.getElementById('outputDir'),outputFile:document.getElementById('outputFile'),textFile:document.getElementById('textFile'),cmdStatus:document.getElementById('cmdStatus'),parseStatus:document.getElementById('parseStatus')
 };
 let parsedJobs=[];
 let importedData=null;
@@ -880,8 +879,7 @@ function safeLabel(value,fallback){const s=String(value||'').trim().replace(/[^a
 function readConfig(){return{customerName:els.customerName.value.trim(),serverName:els.serverName.value.trim()||'localhost',jobFilter:els.jobFilter.value.trim()||'*',auditDays:Math.max(1,parseInt(els.auditDays.value,10)||90),skipAudit:!!els.skipAudit.checked,outputDir:els.outputDir.value.trim()||'VeeamJobReport_Output',outputFile:els.outputFile.value.trim()||'veeam_combined_report.json',textFile:els.textFile.value.trim()||'veeam_job_report.txt'};}
 function batchValue(value){return String(value||'').replace(/[\r\n]/g,' ').replace(/"/g,'').replace(/%/g,'%%');}
 function psSingle(value){return String(value||'').replace(/'/g,"''");}
-async function sha256Hex(text){const data=new TextEncoder().encode(text);const hash=await crypto.subtle.digest('SHA-256',data);return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');}
-async function buildCmd(){const cfg=readConfig(),src=collectorSource(),hash=await sha256Hex(src),skip=cfg.skipAudit?' -SkipAudit':'';return `@echo off
+async function buildCmd(){const cfg=readConfig(),src=collectorSource(),skip=cfg.skipAudit?' -SkipAudit':'';return `@echo off
 setlocal EnableExtensions
 set "OUT_DIR=${batchValue(cfg.outputDir)}"
 set "JSON_FILE=${batchValue(cfg.outputFile)}"
@@ -894,8 +892,6 @@ set "COLLECTOR=%OUT_DIR%\\veeam_combined_collector.ps1"
 set "JSON_REPORT=%OUT_DIR%\\%JSON_FILE%"
 set "TEXT_REPORT=%OUT_DIR%\\%TEXT_FILE%"
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $self='%~f0'; $dest='${psSingle(cfg.outputDir)}\\veeam_combined_collector.ps1'; $raw=[IO.File]::ReadAllText($self); $m=[regex]::Match($raw,'(?s)###BEGIN_COLLECTOR###\\r?\\n(.*?)\\r?\\n###END_COLLECTOR###'); if(-not $m.Success){throw 'Collector block not found in CMD'}; [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($dest)) | Out-Null; [IO.File]::WriteAllText($dest,$m.Groups[1].Value,(New-Object System.Text.UTF8Encoding($false)))"
-if errorlevel 1 goto :fail
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$actual=(Get-FileHash -Algorithm SHA256 -LiteralPath '${psSingle(cfg.outputDir)}\\veeam_combined_collector.ps1').Hash.ToLowerInvariant(); if($actual -ne '${hash}'){Write-Host ('Expected: ${hash}'); Write-Host ('Actual  : '+$actual); exit 9}"
 if errorlevel 1 goto :fail
 where pwsh.exe >nul 2>nul
 if errorlevel 1 (set "PSEXE=powershell.exe") else (set "PSEXE=pwsh.exe")
@@ -975,7 +971,7 @@ function zipStore(entries){const enc=new TextEncoder(),locals=[],centrals=[];let
 function generateDocx(){const entries=[['[Content_Types].xml',contentTypesXml()],['_rels/.rels',relsXml()],['docProps/core.xml',coreXml()],['docProps/app.xml',appXml()],['word/document.xml',documentXml()],['word/styles.xml',stylesXml()],['word/_rels/document.xml.rels',docRelsXml()],['word/header1.xml',headerXml()],['word/footer1.xml',footerXml()]];return new Blob([zipStore(entries)],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});}
 function downloadDocx(){if(!parsedJobs.length)return;const cfg=readConfig(),date=new Date().toISOString().slice(0,10).replace(/-/g,'');downloadBlob(generateDocx(),'Veeam_Combined_Report_'+safeLabel(cfg.customerName||'Customer','Customer')+'_'+date+'.docx');}
 els.input.addEventListener('input',refresh);els.search.addEventListener('input',()=>renderJobs(parsedJobs,els.search.value));els.downloadCmd.addEventListener('click',downloadCmd);els.downloadDocx.addEventListener('click',downloadDocx);els.loadSample.addEventListener('click',()=>{els.input.value=SAMPLE;refresh();});els.clearAll.addEventListener('click',()=>{els.input.value='';els.search.value='';els.fileInput.value='';refresh();});els.copyRaw.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(els.input.value||'');showStatus(els.parseStatus,'Raw output copied.',true);}catch(err){window.prompt('Copy raw output:',els.input.value||'');}});els.fileInput.addEventListener('change',()=>{const f=els.fileInput.files&&els.fileInput.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{els.input.value=String(r.result||'');refresh();};r.onerror=()=>showStatus(els.parseStatus,'Could not read file: '+(r.error&&r.error.message?r.error.message:'unknown error'),false);r.readAsText(f);});
-(async()=>{try{els.collectorHash.textContent=await sha256Hex(collectorSource());}catch(err){els.collectorHash.textContent='Hash unavailable in this browser: '+err.message;}els.input.value=SAMPLE;refresh();})();
+els.input.value=SAMPLE;refresh();
 })();
 </script>
 </body>
