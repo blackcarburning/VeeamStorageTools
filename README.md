@@ -14,7 +14,7 @@ Current version: `0.6.0` (VBR v13 focused)
 
 ## Workflow
 
-1. Open `/home/runner/work/VeeamStorageTools/VeeamStorageTools/index.html` in a modern browser.
+1. Open `index.html` in a modern browser.
 2. Enter customer/server/filter/audit/output settings.
 3. Download the generated Windows `.cmd` wrapper.
 4. Run the `.cmd` on the VBR server.
