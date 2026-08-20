@@ -15,8 +15,9 @@ The workflow mirrors the StorageTools web helper:
 
 ## What the CMD Collects
 
-The generated CMD embeds `collector/Veeam_Storage_Collector.ps1`, writes it to a
-temporary working directory, runs it, and packages these files:
+The generated CMD embeds `collector/Veeam_Storage_Collector.ps1` as a readable
+PowerShell section, writes it to a temporary working directory, runs it, and
+packages these files:
 
 - `veeam_collector_report.txt` - canonical human-readable collector report.
 - `veeam_collector_console.log` - progress and console output.
@@ -44,7 +45,8 @@ other mail-side effects have been removed.
 ## Maintenance
 
 After editing `collector/Veeam_Storage_Collector.ps1`, rebuild the self-contained
-web page:
+web page. The generated CMD will include the collector as readable embedded
+PowerShell, not as a base64 payload:
 
 ```bash
 node scripts/build_web.js

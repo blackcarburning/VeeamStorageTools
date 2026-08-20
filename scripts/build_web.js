@@ -6,9 +6,9 @@ const root = path.resolve(__dirname, '..');
 const collectorPath = path.join(root, 'collector', 'Veeam_Storage_Collector.ps1');
 const outputPath = path.join(root, 'web', 'index.html');
 
-const collectorSource = fs.readFileSync(collectorPath, 'utf8');
-const collectorBytes = Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from(collectorSource, 'utf8')]);
-const collectorB64 = collectorBytes.toString('base64');
+const collectorSource = fs.readFileSync(collectorPath, 'utf8').replace(/^\uFEFF/, '');
+const collectorCmdSource = collectorSource.replace(/\r?\n/g, '\r\n').replace(/(\r\n)+$/, '');
+const collectorBytes = Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from(collectorCmdSource, 'utf8')]);
 const collectorSha256 = crypto.createHash('sha256').update(collectorBytes).digest('hex');
 const sourceCommit = 'edc21d5757cdd9773e356b44513cb72e92dad5c7';
 
@@ -142,7 +142,7 @@ footer{text-align:center;padding:14px;font-size:12px;color:#9ca3af;margin-top:8p
 <footer>VeeamStorageTools - collection and spreadsheet generation run locally in the browser.</footer>
 <div id="statusBar"></div>
 <script>
-const COLLECTOR_B64 = ${JSON.stringify(collectorB64)};
+const COLLECTOR_SOURCE = ${JSON.stringify(collectorCmdSource)};
 const COLLECTOR_SHA256 = ${JSON.stringify(collectorSha256)};
 const COLLECTOR_SOURCE_REPO = 'blackcarburning/Veeam_Log_Collector';
 const COLLECTOR_SOURCE_COMMIT = ${JSON.stringify(sourceCommit)};
@@ -166,14 +166,15 @@ function saveConfig(){localStorage.setItem(APP_STORAGE_KEY,JSON.stringify(readCo
 function loadConfig(){const raw=localStorage.getItem(APP_STORAGE_KEY);if(!raw){flashConfig('No saved configuration found.','alert-info');return;}try{const c=JSON.parse(raw);setVal('customerName',c.customerName);setVal('vbrLabel',c.vbrLabel);setVal('hours',c.hours||24);setVal('outputDir',c.outputDir||'VeeamStorageTools_Output');setChk('onlyFailures',c.onlyFailures);setChk('collectorDebug',c.collectorDebug);flashConfig('Configuration loaded.');}catch{flashConfig('Saved configuration could not be read.','alert-danger');}}
 function flashConfig(msg,cls='alert-success'){const el=document.getElementById('configStatus');el.className='alert '+cls;el.textContent=msg;el.style.display='block';}
 function safeLabel(v,fallback){const s=String(v||fallback||'VBR').replace(/[^A-Za-z0-9._-]/g,'_').replace(/_+/g,'_');return s||fallback;}
-function cmdSafe(v){return String(v??'').replace(/[\r\n]/g,' ').replace(/[&<>|^]/g,'_');}
-function utf16leBase64(s){const bytes=new Uint8Array(s.length*2);for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);bytes[i*2]=c&255;bytes[i*2+1]=c>>8;}let b='';for(const x of bytes)b+=String.fromCharCode(x);return btoa(b);}
-function chunkString(s,n){const out=[];for(let i=0;i<s.length;i+=n)out.push(s.slice(i,i+n));return out;}
+function cmdSafe(v){return String(v??'').replace(/[\r\n]/g,' ').replace(/[&<>|^%"()]/g,'_');}
+function psCmd(s){return '"' + s.replace(/"/g,'\\"') + '"';}
 
 function generateCmdContent(){
   const cfg=readConfig(), now=new Date().toISOString().slice(0,19).replace('T',' ');
-  const server=safeLabel(cfg.vbrLabel,'VBR'), customer=cmdSafe(cfg.customerName||'(not set)'), label=cmdSafe(cfg.vbrLabel||'(not set)');
+  const server=safeLabel(cfg.vbrLabel,'VBR'), customer=cmdSafe(cfg.customerName||'not set'), label=cmdSafe(cfg.vbrLabel||'not set');
   const onlyFailuresFlag=cfg.onlyFailures?' -OnlyFailures':'', debugFlag=cfg.collectorDebug?' -CollectorDebug':'';
+  const collectorStart='@@VEEAM_STORAGE_COLLECTOR_PS1_BEGIN@@', collectorEnd='@@VEEAM_STORAGE_COLLECTOR_PS1_END@@';
+  const tarStart='@@VEEAM_STORAGE_TAR_FALLBACK_PS1_BEGIN@@', tarEnd='@@VEEAM_STORAGE_TAR_FALLBACK_PS1_END@@';
   const tarFallback = [
     '$w=$env:VST_WORKDIR;$t=$env:VST_ARCHIVE_TMP',
     'if(-not $w -or -not $t){exit 1}',
@@ -189,24 +190,22 @@ function generateCmdContent(){
     '$co=[Convert]::ToString($cs,8).PadLeft(6,\'0\');$bc=$A.GetBytes($co);[Array]::Copy($bc,0,$h,148,6);$h[154]=0;$h[155]=32',
     '$S.Write($h,0,512);if($sz -gt 0){$p=[int][Math]::Ceiling($sz/512)*512;$buf=[byte[]]::new($p);[Array]::Copy($data,$buf,$sz);$S.Write($buf,0,$p)}}',
     '$z=[byte[]]::new(1024);$S.Write($z,0,1024);$S.Close()}catch{try{$S.Close()}catch{};if(Test-Path $t){Remove-Item $t -Force -EA SilentlyContinue};exit 1}'
-  ].join('\n');
-  const decodeCmd = utf16leBase64('$b=(Get-Content -LiteralPath $env:VST_B64 -Raw);[IO.File]::WriteAllBytes($env:VST_COLLECTOR,[Convert]::FromBase64String($b))');
-  const stampCmd = utf16leBase64('$d=Get-Date;$u=$d.ToUniversalTime();[Console]::WriteLine($d.ToString("yyyyMMdd_HHmmss")+"|"+$u.ToString("yyyy-MM-ddTHH:mm:ssZ"))');
-  const tarCmd = utf16leBase64(tarFallback);
+  ].join('\r\n');
+  const extractSectionCmd="$ErrorActionPreference='Stop';$self=$env:VST_SELF;$out=$env:VST_SECTION_OUT;$start=$env:VST_SECTION_START;$end=$env:VST_SECTION_END;$text=[IO.File]::ReadAllText($self,[System.Text.Encoding]::UTF8);$s=$text.LastIndexOf($start);$e=if($s -ge 0){$text.IndexOf($end,$s)}else{-1};if($s -lt 0 -or $e -lt 0){throw 'Embedded section markers not found'};$s+=$start.Length;$crlf=[string][char]13+[string][char]10;if($text.Substring($s,[Math]::Min(2,$text.Length-$s)) -eq $crlf){$s+=2}elseif($s -lt $text.Length -and $text[$s] -eq [char]10){$s+=1};$payload=$text.Substring($s,$e-$s).TrimEnd([char]13,[char]10);[IO.File]::WriteAllText($out,$payload,[System.Text.UTF8Encoding]::new($true))";
+  const stampCmd="$d=Get-Date;$u=$d.ToUniversalTime();[Console]::WriteLine($d.ToString('yyyyMMdd_HHmmss')+'|'+$u.ToString('yyyy-MM-ddTHH:mm:ssZ'))";
   const lines=[];
   lines.push('@echo off','SETLOCAL EnableExtensions','REM =================================================================','REM VeeamStorageTools - VBR collection script','REM Generated by VeeamStorageTools Web Helper','REM Customer  : '+customer,'REM VBR Label : '+label,'REM Generated : '+now+' UTC','REM =================================================================','');
   lines.push('SET "HOURS='+cfg.hours+'"','SET "OUTDIR_RAW='+cmdSafe(cfg.outputDir)+'"','SET "LAUNCH_DIR=%CD%"','SET "OUTDIR=%OUTDIR_RAW%"','IF NOT "%OUTDIR_RAW:~1,1%"==":" IF NOT "%OUTDIR_RAW:~0,2%"=="\\\\" SET "OUTDIR=%LAUNCH_DIR%\\%OUTDIR_RAW%"','IF NOT EXIST "%OUTDIR%" MKDIR "%OUTDIR%"','IF NOT EXIST "%OUTDIR%" (','  echo [FATAL] Unable to create output directory: %OUTDIR% 1>&2','  EXIT /B 1',')','');
-  lines.push('SET "WORKDIR=%OUTDIR%\\.veeamstorage_%RANDOM%_%RANDOM%"','IF NOT EXIST "%WORKDIR%" MKDIR "%WORKDIR%"','IF NOT EXIST "%WORKDIR%" (','  echo [FATAL] Unable to create working directory: %WORKDIR% 1>&2','  EXIT /B 1',')','SET "COLLECTOR_B64=%WORKDIR%\\Veeam_Storage_Collector.b64"','SET "COLLECTOR_PS1=%WORKDIR%\\Veeam_Storage_Collector.ps1"','SET "REPORT=%WORKDIR%\\veeam_collector_report.txt"','SET "CONSOLE_LOG=%WORKDIR%\\veeam_collector_console.log"','SET "ERROR_LOG=%WORKDIR%\\veeam_collector_errors.log"','SET "DEBUG_LOG=%WORKDIR%\\veeam_collector_debug.log"','');
-  lines.push('echo Writing embedded collector source...');
-  chunkString(COLLECTOR_B64,76).forEach((chunk,i)=>lines.push((i===0?'>':'>>')+' "%COLLECTOR_B64%" echo '+chunk));
-  lines.push('SET "VST_B64=%COLLECTOR_B64%"','SET "VST_COLLECTOR=%COLLECTOR_PS1%"','powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand '+decodeCmd,'SET DECODE_RC=%ERRORLEVEL%','SET "VST_B64="','SET "VST_COLLECTOR="','IF NOT %DECODE_RC%==0 (','  echo [FATAL] Unable to decode embedded collector source. 1>&2','  EXIT /B %DECODE_RC%',')','');
+  lines.push('SET "WORKDIR=%OUTDIR%\\.veeamstorage_%RANDOM%_%RANDOM%"','IF NOT EXIST "%WORKDIR%" MKDIR "%WORKDIR%"','IF NOT EXIST "%WORKDIR%" (','  echo [FATAL] Unable to create working directory: %WORKDIR% 1>&2','  EXIT /B 1',')','SET "SELF=%~f0"','SET "COLLECTOR_PS1=%WORKDIR%\\Veeam_Storage_Collector.ps1"','SET "TAR_FALLBACK_PS1=%WORKDIR%\\Write-TarArchive.ps1"','SET "REPORT=%WORKDIR%\\veeam_collector_report.txt"','SET "CONSOLE_LOG=%WORKDIR%\\veeam_collector_console.log"','SET "ERROR_LOG=%WORKDIR%\\veeam_collector_errors.log"','SET "DEBUG_LOG=%WORKDIR%\\veeam_collector_debug.log"','');
+  lines.push('echo Writing embedded PowerShell collector source...','SET "VST_SELF=%SELF%"','SET "VST_SECTION_START='+collectorStart+'"','SET "VST_SECTION_END='+collectorEnd+'"','SET "VST_SECTION_OUT=%COLLECTOR_PS1%"','powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command '+psCmd(extractSectionCmd),'SET EXTRACT_RC=%ERRORLEVEL%','IF NOT %EXTRACT_RC%==0 (','  echo [FATAL] Unable to extract embedded collector source. 1>&2','  EXIT /B %EXTRACT_RC%',')','');
+  lines.push('echo Writing embedded PowerShell TAR fallback source...','SET "VST_SECTION_START='+tarStart+'"','SET "VST_SECTION_END='+tarEnd+'"','SET "VST_SECTION_OUT=%TAR_FALLBACK_PS1%"','powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command '+psCmd(extractSectionCmd),'SET EXTRACT_RC=%ERRORLEVEL%','SET "VST_SELF="','SET "VST_SECTION_START="','SET "VST_SECTION_END="','SET "VST_SECTION_OUT="','IF NOT %EXTRACT_RC%==0 (','  echo [FATAL] Unable to extract embedded TAR fallback source. 1>&2','  EXIT /B %EXTRACT_RC%',')','');
   lines.push('SET "COLLECTOR_SHA_EXPECTED='+COLLECTOR_SHA256+'"','SET "COLLECTOR_SHA_ACTUAL="','FOR /F "skip=1 tokens=1" %%H IN (\'certutil -hashfile "%COLLECTOR_PS1%" SHA256 ^| findstr /R "^[0-9A-Fa-f][0-9A-Fa-f]"\') DO IF NOT DEFINED COLLECTOR_SHA_ACTUAL SET "COLLECTOR_SHA_ACTUAL=%%H"','IF DEFINED COLLECTOR_SHA_ACTUAL IF /I NOT "%COLLECTOR_SHA_ACTUAL%"=="%COLLECTOR_SHA_EXPECTED%" (','  echo [FATAL] Collector SHA256 verification failed. 1>&2','  EXIT /B 1',')','');
   lines.push('SET "PS_EXE=powershell"','where pwsh >NUL 2>&1','IF %ERRORLEVEL%==0 SET "PS_EXE=pwsh"','echo Running Veeam collector with %PS_EXE%...','"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -File "%COLLECTOR_PS1%" -Hours %HOURS% -OutputPath "%REPORT%" -DebugLogPath "%DEBUG_LOG%"'+debugFlag+onlyFailuresFlag+' > "%CONSOLE_LOG%" 2> "%ERROR_LOG%"','SET COLLECTOR_RC=%ERRORLEVEL%','IF NOT EXIST "%REPORT%" echo [WARN] Canonical collector report was not created. >> "%ERROR_LOG%"','');
-  lines.push('FOR /F "tokens=1,2 delims=|" %%A IN (\'powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand '+stampCmd+'\') DO (','  SET "ARCHIVE_TS=%%A"','  SET "GEN_UTC=%%B"',')','IF NOT DEFINED ARCHIVE_TS SET "ARCHIVE_TS=%DATE:/=-%_%TIME::=-%"','IF NOT DEFINED GEN_UTC SET "GEN_UTC=(unavailable)"','SET "ARCHIVE_BASE=VeeamStorageTools_'+server+'_%ARCHIVE_TS%.tar"','SET "ARCHIVE_FILE=%OUTDIR%\\%ARCHIVE_BASE%"','SET "ARCHIVE_TMP=%OUTDIR%\\%ARCHIVE_BASE%.tmp"','');
+  lines.push('FOR /F "tokens=1,2 delims=|" %%A IN (\'powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command '+psCmd(stampCmd)+'\') DO (','  SET "ARCHIVE_TS=%%A"','  SET "GEN_UTC=%%B"',')','IF NOT DEFINED ARCHIVE_TS SET "ARCHIVE_TS=%DATE:/=-%_%TIME::=-%"','IF NOT DEFINED GEN_UTC SET "GEN_UTC=(unavailable)"','SET "ARCHIVE_BASE=VeeamStorageTools_'+server+'_%ARCHIVE_TS%.tar"','SET "ARCHIVE_FILE=%OUTDIR%\\%ARCHIVE_BASE%"','SET "ARCHIVE_TMP=%OUTDIR%\\%ARCHIVE_BASE%.tmp"','');
   lines.push('(','  echo format=VeeamStorageTools-Collection','  echo format_version=1','  echo customer='+customer,'  echo vbr_label='+label,'  echo generated_utc=%GEN_UTC%','  echo hours=%HOURS%','  echo only_failures='+String(cfg.onlyFailures),'  echo collector_debug='+String(cfg.collectorDebug),'  echo collector_source_repo='+COLLECTOR_SOURCE_REPO,'  echo collector_source_commit='+COLLECTOR_SOURCE_COMMIT,'  echo collector_sha256='+COLLECTOR_SHA256,'  echo collector_rc=%COLLECTOR_RC%','  echo powershell_exe=%PS_EXE%','  echo report_file=veeam_collector_report.txt',') > "%WORKDIR%\\manifest.txt"','');
-  lines.push('echo Creating archive: %ARCHIVE_FILE%','SET "ARCHIVE_RC=1"','where tar >NUL 2>&1','IF %ERRORLEVEL% NEQ 0 GOTO :TAR_PS','tar -cf "%ARCHIVE_TMP%" -C "%WORKDIR%" .','SET ARCHIVE_RC=%ERRORLEVEL%','GOTO :ARCHIVE_DONE',':TAR_PS','SET "VST_WORKDIR=%WORKDIR%"','SET "VST_ARCHIVE_TMP=%ARCHIVE_TMP%"','powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand '+tarCmd,'SET ARCHIVE_RC=%ERRORLEVEL%','SET "VST_WORKDIR="','SET "VST_ARCHIVE_TMP="',':ARCHIVE_DONE','IF %ARCHIVE_RC%==0 IF EXIST "%ARCHIVE_TMP%" MOVE /Y "%ARCHIVE_TMP%" "%ARCHIVE_FILE%" >NUL','IF NOT %ARCHIVE_RC%==0 echo [WARN] Archive creation failed; loose files will remain in %OUTDIR%. 1>&2','');
+  lines.push('echo Creating archive: %ARCHIVE_FILE%','SET "ARCHIVE_RC=1"','where tar >NUL 2>&1','IF %ERRORLEVEL% NEQ 0 GOTO :TAR_PS','tar -cf "%ARCHIVE_TMP%" -C "%WORKDIR%" .','SET ARCHIVE_RC=%ERRORLEVEL%','GOTO :ARCHIVE_DONE',':TAR_PS','SET "VST_WORKDIR=%WORKDIR%"','SET "VST_ARCHIVE_TMP=%ARCHIVE_TMP%"','powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%TAR_FALLBACK_PS1%"','SET ARCHIVE_RC=%ERRORLEVEL%','SET "VST_WORKDIR="','SET "VST_ARCHIVE_TMP="',':ARCHIVE_DONE','IF %ARCHIVE_RC%==0 IF EXIST "%ARCHIVE_TMP%" MOVE /Y "%ARCHIVE_TMP%" "%ARCHIVE_FILE%" >NUL','IF NOT %ARCHIVE_RC%==0 echo [WARN] Archive creation failed; loose files will remain in %OUTDIR%. 1>&2','');
   lines.push('COPY /Y "%WORKDIR%\\manifest.txt" "%OUTDIR%\\" >NUL 2>&1','COPY /Y "%WORKDIR%\\veeam_collector_report.txt" "%OUTDIR%\\" >NUL 2>&1','COPY /Y "%WORKDIR%\\veeam_collector_console.log" "%OUTDIR%\\" >NUL 2>&1','COPY /Y "%WORKDIR%\\veeam_collector_errors.log" "%OUTDIR%\\" >NUL 2>&1','IF EXIST "%WORKDIR%\\veeam_collector_debug.log" COPY /Y "%WORKDIR%\\veeam_collector_debug.log" "%OUTDIR%\\" >NUL 2>&1','COPY /Y "%WORKDIR%\\Veeam_Storage_Collector.ps1" "%OUTDIR%\\" >NUL 2>&1','IF EXIST "%ARCHIVE_FILE%" RD /S /Q "%WORKDIR%"','echo =================================================================','IF EXIST "%ARCHIVE_FILE%" echo Collection archive: %ARCHIVE_FILE%','IF NOT EXIST "%ARCHIVE_FILE%" echo Loose files retained in: %OUTDIR%','echo Collector exit code: %COLLECTOR_RC%','echo Import the TAR archive into VeeamStorageTools to generate the spreadsheet.','echo =================================================================','ENDLOCAL & EXIT /B %COLLECTOR_RC%');
-  return lines.join('\r\n');
+  return [lines.join('\r\n'),collectorStart,COLLECTOR_SOURCE,collectorEnd,tarStart,tarFallback,tarEnd,''].join('\r\n');
 }
 function downloadCmd(){const cfg=readConfig();const name='VeeamStorageTools_'+safeLabel(cfg.vbrLabel,'VBR')+'.cmd';downloadText(generateCmdContent(),name,'text/plain');showStatus('Downloaded '+name);}
 function downloadText(content,filename,mime){const blob=new Blob([content],{type:mime});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);}
