@@ -50,7 +50,7 @@ button:hover{border-color:rgba(96,165,250,.55);background:rgba(96,165,250,.12)}b
     <h1>Veeam Job Report Builder</h1>
     <p class="sub">Generate the CMD wrapper, import combined JSON or text output, review repository/retention/schedule/GFS/scope, and create the DOCX report locally in the browser.</p>
   </div>
-  <div class="version">v0.5.0</div>
+  <div class="version">v0.5.1</div>
 </header>
 <main>
   <aside class="panel">
@@ -969,20 +969,67 @@ function Get-BackupVersionRows {
 
 function Get-VbrLicensingRows {
     $rows = New-Object System.Collections.Generic.List[object]
-    foreach ($cmd in @('Get-VBRInstalledLicense','Get-VBRLicense','Get-VBRLicenseUsage','Get-VBRLicensedInstanceWorkload')) {
-        if (-not (Test-CmdletExists $cmd)) { continue }
+    function Add-LicenseRow {
+        param([string]$SourceCmdlet, [object]$Item)
+        if ($null -eq $Item) { return }
         try {
-            foreach ($item in @(& $cmd -ErrorAction SilentlyContinue)) {
-                [void]$rows.Add([pscustomobject][ordered]@{
-                    SourceCmdlet = $cmd
-                    Name = Get-Prop $item @('Name','LicensedTo','Description','Type')
-                    Edition = Get-Prop $item @('Edition','LicenseEdition','Package')
-                    Status = Get-Prop $item @('Status','State','IsExpired')
-                    Expiration = Get-Prop $item @('ExpirationDate','ExpirationTime','SupportExpirationDate','MaintenanceExpirationDate')
-                    Licensed = Get-Prop $item @('LicensedInstancesNumber','SocketsNumber','Instances','Capacity')
-                    Used = Get-Prop $item @('UsedInstancesNumber','UsedSocketsNumber','Used','Consumed')
-                    Details = Describe-SimpleProps -Obj $item -Prefer @('Name','Edition','Status','ExpirationDate','LicensedInstancesNumber','UsedInstancesNumber')
-                })
+            [void]$rows.Add([pscustomobject][ordered]@{
+                SourceCmdlet = $SourceCmdlet
+                Name = (Get-Prop $Item @('Name','LicensedTo','Description','Type','Object','Workload'))
+                Edition = (Get-Prop $Item @('Edition','LicenseEdition','Package'))
+                Status = (Get-Prop $Item @('Status','State','IsExpired'))
+                Expiration = (Get-Prop $Item @('ExpirationDate','ExpirationTime','SupportExpirationDate','MaintenanceExpirationDate'))
+                Licensed = (Get-Prop $Item @('LicensedInstancesNumber','LicensedSocketsNumber','SocketsNumber','Instances','Capacity'))
+                Used = (Get-Prop $Item @('UsedInstancesNumber','UsedSocketsNumber','Used','Consumed','InstanceCount','InstancesNumber'))
+                Details = (Describe-SimpleProps -Obj $Item -Prefer @('Name','Edition','Status','ExpirationDate','LicensedInstancesNumber','UsedInstancesNumber','LicensedSocketsNumber','UsedSocketsNumber','Object','Workload','InstancesNumber','InstanceCount'))
+            })
+        }
+        catch {}
+    }
+
+    function Test-CanInvokeWithoutMandatoryParameter {
+        param([string]$Name)
+        try {
+            $cmdInfo = Get-Command -Name $Name -ErrorAction Stop
+            $common = @('Verbose','Debug','ErrorAction','WarningAction','InformationAction','ProgressAction','ErrorVariable','WarningVariable','InformationVariable','OutVariable','OutBuffer','PipelineVariable')
+            foreach ($set in @($cmdInfo.ParameterSets)) {
+                $mandatory = @($set.Parameters | Where-Object { $_.IsMandatory -and ($common -notcontains $_.Name) })
+                if ($mandatory.Count -eq 0) { return $true }
+            }
+        }
+        catch {}
+        return $false
+    }
+
+    $installedLicenses = @()
+    if (Test-CmdletExists 'Get-VBRInstalledLicense') {
+        try {
+            $installedLicenses = @(Get-VBRInstalledLicense -ErrorAction Stop)
+            foreach ($license in $installedLicenses) {
+                Add-LicenseRow -SourceCmdlet 'Get-VBRInstalledLicense' -Item $license
+            }
+        }
+        catch {}
+    }
+
+    foreach ($cmd in @('Get-VBRInstanceLicenseSummary','Get-VBRSocketLicenseSummary','Get-VBRLicensedInstanceWorkload')) {
+        if (-not (Test-CmdletExists $cmd)) { continue }
+        foreach ($license in $installedLicenses) {
+            try {
+                foreach ($item in @(& $cmd -License $license -ErrorAction Stop)) {
+                    Add-LicenseRow -SourceCmdlet $cmd -Item $item
+                }
+            }
+            catch {}
+        }
+    }
+
+    foreach ($cmd in @('Get-VBRLicense','Get-VBRLicenseUsage')) {
+        if (-not (Test-CmdletExists $cmd)) { continue }
+        if (-not (Test-CanInvokeWithoutMandatoryParameter -Name $cmd)) { continue }
+        try {
+            foreach ($item in @(& $cmd -ErrorAction Stop)) {
+                Add-LicenseRow -SourceCmdlet $cmd -Item $item
             }
         }
         catch {}
@@ -1469,7 +1516,7 @@ Write-Host ""
 <script>
 (function(){
 'use strict';
-const APP_VERSION='0.5.0';
+const APP_VERSION='0.5.1';
 const SAMPLE=`====================================================================================================
 Job:  SQL_Daily_Backup
 Type: Backup
@@ -1618,8 +1665,9 @@ function gfsRows(){return parsedJobs.map(j=>({Job:j.name,Weekly:j.gfs.weekly,Mon
 function scopeRows(){return parsedJobs.map(j=>({Job:j.name,Includes:j.includes.join(', '),Excludes:j.excludes.join(', ')}));}
 function pathValue(obj,path){let cur=obj;for(const part of String(path||'').split('.')){if(cur==null)return'';cur=cur[part];}return cur==null?'':cur;}
 function firstPath(row,paths){for(const path of paths){const v=pathValue(row,path);if(v!=null&&safeStr(v).trim())return v;}return'';}
-function definedRepoRows(data){return rows(data,'DefinedRepositories').map(r=>({'Repository':safeStr(firstPath(r,['Repository','repository'])),'Tier':safeStr(firstPath(r,['Tier','tier'])),'Parent':safeStr(firstPath(r,['Parent','parent'])),'Status':safeStr(firstPath(r,['Status','status'])),'Total':safeStr(firstPath(r,['Total','total'])),'Used':safeStr(firstPath(r,['Used','used'])),'Free':safeStr(firstPath(r,['Free','free'])),'Used %':safeStr(firstPath(r,['UsedPct','Used %','used_pct'])),'Location':safeStr(firstPath(r,['Location','location']))}));}
-function capacityTierRows(data){const snap=data&&data.CapacityTierUtilisation;const source=asArray(snap&&snap.rows).filter(x=>x&&typeof x==='object');if(source.length){return source.map(r=>({'SOBR':safeStr(firstPath(r,['sobr_name','Parent'])),'Capacity Tier':safeStr(firstPath(r,['capacity_extent_name','Repository'])),'Status':safeStr(firstPath(r,['capacity_extent_status','Status'])),'Path':safeStr(firstPath(r,['object_storage_path','Location'])),'Total':safeStr(firstPath(r,['space.total','Total'])),'Used':safeStr(firstPath(r,['space.used','Used'])),'Free':safeStr(firstPath(r,['space.free','Free'])),'Used %':safeStr(firstPath(r,['space.used_pct','UsedPct','Used %'])),'Source':safeStr(firstPath(r,['source_cmdlet','Source']))}));}return definedRepoRows(data).filter(r=>String(r.Tier).toLowerCase()==='capacity').map(r=>({'SOBR':r.Parent,'Capacity Tier':r.Repository,'Status':r.Status,'Path':r.Location,'Total':r.Total,'Used':r.Used,'Free':r.Free,'Used %':r['Used %'],'Source':'DefinedRepositories'}));}
+function scaleOutFallbackRepoRows(data){const out=[];for(const s of rows(data,'ScaleOutRepositories')){const name=safeStr(firstPath(s,['Name']));if(name)out.push({'Repository':name,'Tier':'SOBR','Parent':'','Status':'','Total':'','Used':'','Free':'','Used %':'','Location':''});for(const e of asArray(firstPath(s,['Extent']))){const v=safeStr(e);if(v)out.push({'Repository':v,'Tier':'Perf extent','Parent':name,'Status':'','Total':'','Used':'','Free':'','Used %':'','Location':''});}for(const c of asArray(firstPath(s,['CapacityExtents','CapacityExtent']))){const v=safeStr(c);if(v)out.push({'Repository':v,'Tier':'Capacity','Parent':name,'Status':'','Total':'','Used':'','Free':'','Used %':'','Location':''});}}return out;}
+function definedRepoRows(data){const mapped=rows(data,'DefinedRepositories').map(r=>({'Repository':safeStr(firstPath(r,['Repository','repository'])),'Tier':safeStr(firstPath(r,['Tier','tier'])),'Parent':safeStr(firstPath(r,['Parent','parent'])),'Status':safeStr(firstPath(r,['Status','status'])),'Total':safeStr(firstPath(r,['Total','total'])),'Used':safeStr(firstPath(r,['Used','used'])),'Free':safeStr(firstPath(r,['Free','free'])),'Used %':safeStr(firstPath(r,['UsedPct','Used %','used_pct'])),'Location':safeStr(firstPath(r,['Location','location']))}));const fallback=scaleOutFallbackRepoRows(data);const seen=new Set(mapped.map(r=>(r.Repository+'|'+r.Tier+'|'+r.Parent).toLowerCase()));for(const row of fallback){const key=(row.Repository+'|'+row.Tier+'|'+row.Parent).toLowerCase();if(!seen.has(key)){mapped.push(row);seen.add(key);}}return mapped;}
+function capacityTierRows(data){const snap=data&&data.CapacityTierUtilisation;const source=asArray(snap&&snap.rows).filter(x=>x&&typeof x==='object');if(source.length){return source.map(r=>({'SOBR':safeStr(firstPath(r,['sobr_name','Parent'])),'Capacity Tier':safeStr(firstPath(r,['capacity_extent_name','Repository'])),'Status':safeStr(firstPath(r,['capacity_extent_status','Status'])),'Path':safeStr(firstPath(r,['object_storage_path','Location'])),'Total':safeStr(firstPath(r,['space.total','Total'])),'Used':safeStr(firstPath(r,['space.used','Used'])),'Free':safeStr(firstPath(r,['space.free','Free'])),'Used %':safeStr(firstPath(r,['space.used_pct','UsedPct','Used %'])),'Source':safeStr(firstPath(r,['source_cmdlet','Source']))}));}return definedRepoRows(data).filter(r=>String(r.Tier).toLowerCase()==='capacity').map(r=>({'SOBR':r.Parent,'Capacity Tier':r.Repository,'Status':r.Status,'Path':r.Location,'Total':r.Total,'Used':r.Used,'Free':r.Free,'Used %':r['Used %'],'Source':'Repository inventory'}));}
 function capacityTotalRows(data){const totals=asArray(data&&data.CapacityTierUtilisation&&data.CapacityTierUtilisation.totals_by_sobr).filter(x=>x&&typeof x==='object');return totals.map(r=>({'SOBR':safeStr(firstPath(r,['sobr_name'])),'Extents':safeStr(firstPath(r,['extent_count'])),'Total':safeStr(firstPath(r,['space.total'])),'Used':safeStr(firstPath(r,['space.used'])),'Free':safeStr(firstPath(r,['space.free'])),'Used %':safeStr(firstPath(r,['space.used_pct'])),'Missing total':safeStr(firstPath(r,['missing_total_count'])),'Missing used':safeStr(firstPath(r,['missing_used_count'])),'Missing free':safeStr(firstPath(r,['missing_free_count']))}));}
 function backupVersionRows(data){return rows(data,'BackupVersions').map(r=>({'Machine':safeStr(firstPath(r,['Machine','machine'])),'Job':safeStr(firstPath(r,['JobName','Job','job_name'])),'Total RPs':safeStr(firstPath(r,['TotalRestorePoints','Total_Restore_Points','Total Restore Points'])),'Performance RPs':safeStr(firstPath(r,['PerformanceRestorePoints','Performance_Restore_Points','Performance Restore Points'])),'Capacity RPs':safeStr(firstPath(r,['CapacityRestorePoints','Capacity_Restore_Points','Capacity Restore Points']))}));}
 function licensingRows(data){return rows(data,'VBRLicensing').map(r=>({'Source':safeStr(firstPath(r,['SourceCmdlet'])),'Name':safeStr(firstPath(r,['Name'])),'Edition':safeStr(firstPath(r,['Edition'])),'Status':safeStr(firstPath(r,['Status'])),'Expiration':safeStr(firstPath(r,['Expiration'])),'Licensed':safeStr(firstPath(r,['Licensed'])),'Used':safeStr(firstPath(r,['Used'])),'Details':safeStr(firstPath(r,['Details']))}));}
@@ -1664,10 +1712,12 @@ p+=tableXml(scopeRows(),['Job','Includes','Excludes'],{max:180,widths:[2,3.5,3.5
 p+=heading('6. Repository Summary',1);
 const repoRows=[...repos].sort().map(r=>({Repository:r,Jobs:parsedJobs.filter(j=>j.repository===r).map(j=>j.name).join(', '),Count:String(parsedJobs.filter(j=>j.repository===r).length)}));
 p+=tableXml(repoRows,['Repository','Jobs','Count'],{max:180,widths:[2.2,5,.7]});
+if(defined.length){
+  p+=heading('Repository Inventory',2);
+  p+=tableXml(defined,['Repository','Tier','Parent','Status','Total','Used','Free','Used %'],{max:90,widths:[2.3,1.25,1.8,1,1,1,1,.75],size:7});
+}
 if(importedData){
   p+=heading('7. Repository Capacity and Restore Points',1);
-  p+=heading('Defined Repositories',2);
-  p+=tableXml(defined,['Repository','Tier','Parent','Status','Total','Used','Free','Used %'],{max:90,widths:[2.3,1.25,1.8,1,1,1,1,.75],size:7});
   p+=heading('Capacity Tier Extents',2);
   p+=tableXml(capacity,['SOBR','Capacity Tier','Status','Path','Total','Used','Free','Used %','Source'],{max:85,widths:[1.7,1.9,.85,2.6,.9,.9,.9,.7,1.2],size:6.8});
   if(capacityTotals.length){
