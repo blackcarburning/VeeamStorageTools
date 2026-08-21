@@ -26,7 +26,8 @@ foreach($snippet in $requiredSnippets){
     if(-not $collectorSource.Contains($snippet) -and -not $html.Contains($snippet)){ throw "Missing expected source snippet: $snippet" }
 }
 
-$toArrayMatch=[regex]::Match($collectorSource,'function To-Array\(\$x\)\{.*?^\}','Singleline, Multiline')
+$regexOptions=[System.Text.RegularExpressions.RegexOptions]::Singleline -bor [System.Text.RegularExpressions.RegexOptions]::Multiline
+$toArrayMatch=[regex]::Match($collectorSource,'function To-Array\(\$x\)\{.*?^\}',$regexOptions)
 if(-not $toArrayMatch.Success){ throw 'To-Array function not found in collector source' }
 Invoke-Expression $toArrayMatch.Value
 
