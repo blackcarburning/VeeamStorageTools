@@ -50,7 +50,7 @@ button:hover{border-color:rgba(96,165,250,.55);background:rgba(96,165,250,.12)}b
     <h1>Veeam Job Report Builder (VBR v13)</h1>
     <p class="sub">Generate a VBR v13-compatible read-only collector CMD, import JSON/text output, review expanded infrastructure/security/storage inventory, and create the DOCX report locally in the browser.</p>
   </div>
-  <div class="version">v0.7.1</div>
+  <div class="version">v0.7.2</div>
 </header>
 <main>
   <aside class="panel">
@@ -167,15 +167,15 @@ function Get-NumericValue { param($Obj,[string[]]$Names)
     try{ return [double]$v }catch{ return $null }
 }
 function Format-Size { param($Value)
-    if($null -eq $Value -or "$Value" -eq ''){ return '' }
+    if($null -eq $Value -or "$Value" -eq ''){ return [string]'' }
     $num=$null
-    try{$num=[double]$Value}catch{return "$Value"}
-    if($num -lt 0){ return "$Value" }
-    if($num -ge 1TB){ return '{0:N2} TB' -f ($num/1TB) }
-    if($num -ge 1GB){ return '{0:N2} GB' -f ($num/1GB) }
-    if($num -ge 1MB){ return '{0:N2} MB' -f ($num/1MB) }
-    if($num -ge 1KB){ return '{0:N2} KB' -f ($num/1KB) }
-    '{0:N0} B' -f $num
+    try{$num=[double]$Value}catch{return [string]"$Value"}
+    if($num -lt 0){ return [string]"$Value" }
+    if($num -ge 1TB){ return [string]('{0:N2} TB' -f ($num/1TB)) }
+    if($num -ge 1GB){ return [string]('{0:N2} GB' -f ($num/1GB)) }
+    if($num -ge 1MB){ return [string]('{0:N2} MB' -f ($num/1MB)) }
+    if($num -ge 1KB){ return [string]('{0:N2} KB' -f ($num/1KB)) }
+    return [string]('{0:N0} B' -f $num)
 }
 function Get-SpaceSnapshot { param($Obj)
     if(-not $Obj){ return [ordered]@{total='';used='';free='';used_pct=''} }
@@ -185,10 +185,13 @@ function Get-SpaceSnapshot { param($Obj)
     if($null -eq $free -and $null -ne $total -and $null -ne $used){ $free=[math]::Max(0,($total-$used)) }
     $pct=''
     if($null -ne $total -and $total -gt 0 -and $null -ne $used){ $pct=('{0:N2}' -f ((100.0*$used)/$total)) }
+    $totalDisplay=''; if($null -ne $total){ $totalDisplay=[string](Format-Size $total) }
+    $usedDisplay=''; if($null -ne $used){ $usedDisplay=[string](Format-Size $used) }
+    $freeDisplay=''; if($null -ne $free){ $freeDisplay=[string](Format-Size $free) }
     [ordered]@{
-        total=$(if($null -ne $total){Format-Size $total}else{''})
-        used=$(if($null -ne $used){Format-Size $used}else{''})
-        free=$(if($null -ne $free){Format-Size $free}else{''})
+        total=$totalDisplay
+        used=$usedDisplay
+        free=$freeDisplay
         used_pct=$pct
         total_raw=$total
         used_raw=$used
@@ -249,10 +252,12 @@ function Get-JobConfigRows { param([object[]]$Jobs)
         if(@($includes).Count -eq 0){$includes=@('none')}
         if(@($excludes).Count -eq 0){$excludes=@('none')}
         if(-not $schedSummary){$schedSummary=Get-JobScheduleSummary -Job $job}
+        $vssSummaryText='none'; if($vssSummary){ $vssSummaryText=[string]$vssSummary }
+        $advSummaryText='none'; if($advSummary){ $advSummaryText=[string]$advSummary }
         [pscustomobject][ordered]@{
             Name=Get-Prop $job @('Name'); JobName=Get-Prop $job @('Name'); Type=Get-Prop $job @('JobType','Type'); JobType=Get-Prop $job @('JobType','Type');
             Repository=$repo; Retention=$ret; Schedule=$schedSummary; Weekly=$weekly; Monthly=$monthly; Yearly=$yearly; Tags=$tags; Includes=$includes; Excludes=$excludes;
-            ScheduleOptions=$schedSummary; VssOptions=$(if($vssSummary){$vssSummary}else{'none'}); AdvancedOptions=$(if($advSummary){$advSummary}else{'none'})
+            ScheduleOptions=$schedSummary; VssOptions=$vssSummaryText; AdvancedOptions=$advSummaryText
         }
     })
 }
@@ -286,7 +291,7 @@ function Write-TextReport { param([object[]]$JobRows,[string]$Path)
 
 Initialize-VeeamPowerShell
 $schema='veeam-report-schema-v13.1.0'
-$collectorVersion='0.7.1'
+$collectorVersion='0.7.2'
 $sectionDiagnostics=New-Object System.Collections.Generic.List[object]
 
 $session=$null; try{$session=Get-VBRServerSession -ErrorAction SilentlyContinue}catch{}
@@ -437,7 +442,7 @@ foreach($r in (To-Array $repos | Select-Object -First 250)){
 foreach($sobr in (To-Array $sobrs | Select-Object -First 60)){
     $sobrName=(Get-Prop $sobr @('Name'))
     [void]$repoRows.Add([pscustomobject]@{Repository=$sobrName;Tier='SOBR';Parent='';Status=(Get-Prop $sobr @('State','Status'));Total='';Used='';Free='';UsedPct='';Location=(Get-Prop $sobr @('Description'))})
-    $sobrTotal=0.0; $sobrUsed=0.0; $sobrFree=0.0; $cnt=0; $missingTotal=0; $missingUsed=0; $missingFree=0
+    [double]$sobrTotal=0.0; [double]$sobrUsed=0.0; [double]$sobrFree=0.0; $cnt=0; $missingTotal=0; $missingUsed=0; $missingFree=0
     if(Test-CmdletExists 'Get-VBRRepositoryExtent'){
         foreach($ext in @(Get-VBRRepositoryExtent -Repository $sobr -WarningAction SilentlyContinue)){
             $snap=Get-ExtentContainerSnapshot $ext
@@ -451,17 +456,28 @@ foreach($sobr in (To-Array $sobrs | Select-Object -First 60)){
             $ceName=(Get-Prop $ce @('Name','DisplayName')); if(-not $ceName){$ceName=(Get-Prop $ce @('RepositoryName'))}
             $path=(Get-Prop $ce @('Folder','Path','BucketName','ContainerName','AccountName'))
             [void]$repoRows.Add([pscustomobject]@{Repository=$ceName;Tier='Capacity';Parent=$sobrName;Status=(Get-Prop $ce @('State','Status'));Total=$snap.total;Used=$snap.used;Free=$snap.free;UsedPct=$snap.used_pct;Location=$path})
-            [void]$capRows.Add([pscustomobject][ordered]@{sobr_name=$sobrName;capacity_extent_name=$ceName;capacity_extent_status=(Get-Prop $ce @('State','Status'));object_storage_path=$path;space=[ordered]@{total=$snap.total;used=$snap.used;free=$snap.free;used_pct=$snap.used_pct};source_cmdlet='Get-VBRCapacityExtent'})
-            if($null -ne $snap.total_raw){$sobrTotal += [double]$snap.total_raw}else{$missingTotal++}
-            if($null -ne $snap.used_raw){$sobrUsed += [double]$snap.used_raw}else{$missingUsed++}
-            if($null -ne $snap.free_raw){$sobrFree += [double]$snap.free_raw}else{$missingFree++}
+            $capRowSpace=[ordered]@{
+                total=[string](if($null -ne $snap.total){$snap.total}else{''})
+                used=[string](if($null -ne $snap.used){$snap.used}else{''})
+                free=[string](if($null -ne $snap.free){$snap.free}else{''})
+                used_pct=[string](if($null -ne $snap.used_pct){$snap.used_pct}else{''})
+            }
+            [void]$capRows.Add([pscustomobject][ordered]@{sobr_name=$sobrName;capacity_extent_name=$ceName;capacity_extent_status=(Get-Prop $ce @('State','Status'));object_storage_path=$path;space=$capRowSpace;source_cmdlet='Get-VBRCapacityExtent'})
+            if($null -ne $snap.total_raw){try{$sobrTotal = [double]$sobrTotal + [double]$snap.total_raw}catch{$missingTotal++}}else{$missingTotal++}
+            if($null -ne $snap.used_raw){try{$sobrUsed = [double]$sobrUsed + [double]$snap.used_raw}catch{$missingUsed++}}else{$missingUsed++}
+            if($null -ne $snap.free_raw){try{$sobrFree = [double]$sobrFree + [double]$snap.free_raw}catch{$missingFree++}}else{$missingFree++}
         }
     }
     $pct=''; if($sobrTotal -gt 0){$pct=('{0:N2}' -f ((100.0*$sobrUsed)/$sobrTotal))}
-    [void]$capTotals.Add([pscustomobject][ordered]@{sobr_name=$sobrName;extent_count=$cnt;space=[ordered]@{total=$(if($sobrTotal -gt 0){Format-Size $sobrTotal}else{''});used=$(if($cnt -gt $missingUsed){Format-Size $sobrUsed}else{''});free=$(if($cnt -gt $missingFree){Format-Size $sobrFree}else{''});used_pct=$pct};missing_total_count=$missingTotal;missing_used_count=$missingUsed;missing_free_count=$missingFree})
+    $sobrTotalText=''; if($sobrTotal -gt 0){ $sobrTotalText=[string](Format-Size $sobrTotal) }
+    $sobrUsedText=''; if($cnt -gt $missingUsed){ $sobrUsedText=[string](Format-Size $sobrUsed) }
+    $sobrFreeText=''; if($cnt -gt $missingFree){ $sobrFreeText=[string](Format-Size $sobrFree) }
+    $capTotalSpace=[ordered]@{ total=$sobrTotalText; used=$sobrUsedText; free=$sobrFreeText; used_pct=[string]$pct }
+    [void]$capTotals.Add([pscustomobject][ordered]@{sobr_name=$sobrName;extent_count=$cnt;space=$capTotalSpace;missing_total_count=$missingTotal;missing_used_count=$missingUsed;missing_free_count=$missingFree})
 }
 $inventory.DefinedRepositories=@($repoRows | Select-Object -First 500)
-$inventory.CapacityTierUtilisation=[ordered]@{ schema_version='capacity-tier-utilisation-v1'; row_count=@($capRows).Count; rows=@($capRows | Select-Object -First 500); totals_by_sobr=@($capTotals); errors=@() }
+$capacityTierUtilisation=[ordered]@{ schema_version='capacity-tier-utilisation-v1'; row_count=@($capRows).Count; rows=@($capRows | Select-Object -First 500); totals_by_sobr=@($capTotals); errors=@() }
+$inventory.CapacityTierUtilisation=$capacityTierUtilisation
 
 if(Test-CmdletExists 'Get-VBRInstalledLicense'){
     try{
@@ -538,7 +554,7 @@ if($inventory.TextReportPath){ Write-Host "Text report written to: $($inventory.
 <script>
 (function(){
 'use strict';
-const APP_VERSION='0.7.1';
+const APP_VERSION='0.7.2';
 const els={
   input:document.getElementById('input'),search:document.getElementById('search'),jobs:document.getElementById('jobs'),
   statJobs:document.getElementById('statJobs'),statGfs:document.getElementById('statGfs'),statActive:document.getElementById('statActive'),topRepos:document.getElementById('topRepos'),
