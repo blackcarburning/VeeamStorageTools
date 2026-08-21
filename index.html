@@ -50,7 +50,7 @@ button:hover{border-color:rgba(96,165,250,.55);background:rgba(96,165,250,.12)}b
     <h1>Veeam Job Report Builder (VBR v13)</h1>
     <p class="sub">Generate a VBR v13-compatible read-only collector CMD, import JSON/text output, review expanded infrastructure/security/storage inventory, and create the DOCX report locally in the browser.</p>
   </div>
-  <div class="version">v0.7.0</div>
+  <div class="version">v0.7.1</div>
 </header>
 <main>
   <aside class="panel">
@@ -79,7 +79,7 @@ button:hover{border-color:rgba(96,165,250,.55);background:rgba(96,165,250,.12)}b
     <h2>Paste or Import Output</h2>
     <div class="content stack">
       <textarea id="input" spellcheck="false" placeholder="Paste veeam_combined_report.json or veeam_job_report.txt output here..."></textarea>
-      <div class="row"><input id="fileInput" type="file" accept=".json,.txt,.log,application/json,text/plain"><button id="loadSample" type="button">Load sample</button><button id="copyRaw" type="button">Copy raw</button><button id="clearAll" type="button">Clear</button></div>
+      <div class="row"><input id="fileInput" type="file" accept=".json,.txt,.log,application/json,text/plain"><button id="copyRaw" type="button">Copy raw</button><button id="clearAll" type="button">Clear</button></div>
       <div><label for="search">Search</label><input id="search" type="text" placeholder="Search jobs, repos, includes/excludes..."></div>
       <div class="summary">
         <div class="stat"><span class="muted">Jobs</span><strong id="statJobs">0</strong></div>
@@ -186,9 +186,9 @@ function Get-SpaceSnapshot { param($Obj)
     $pct=''
     if($null -ne $total -and $total -gt 0 -and $null -ne $used){ $pct=('{0:N2}' -f ((100.0*$used)/$total)) }
     [ordered]@{
-        total=(if($null -ne $total){Format-Size $total}else{''})
-        used=(if($null -ne $used){Format-Size $used}else{''})
-        free=(if($null -ne $free){Format-Size $free}else{''})
+        total=$(if($null -ne $total){Format-Size $total}else{''})
+        used=$(if($null -ne $used){Format-Size $used}else{''})
+        free=$(if($null -ne $free){Format-Size $free}else{''})
         used_pct=$pct
         total_raw=$total
         used_raw=$used
@@ -286,7 +286,7 @@ function Write-TextReport { param([object[]]$JobRows,[string]$Path)
 
 Initialize-VeeamPowerShell
 $schema='veeam-report-schema-v13.1.0'
-$collectorVersion='0.7.0'
+$collectorVersion='0.7.1'
 $sectionDiagnostics=New-Object System.Collections.Generic.List[object]
 
 $session=$null; try{$session=Get-VBRServerSession -ErrorAction SilentlyContinue}catch{}
@@ -458,7 +458,7 @@ foreach($sobr in (To-Array $sobrs | Select-Object -First 60)){
         }
     }
     $pct=''; if($sobrTotal -gt 0){$pct=('{0:N2}' -f ((100.0*$sobrUsed)/$sobrTotal))}
-    [void]$capTotals.Add([pscustomobject][ordered]@{sobr_name=$sobrName;extent_count=$cnt;space=[ordered]@{total=(if($sobrTotal -gt 0){Format-Size $sobrTotal}else{''});used=(if($cnt -gt $missingUsed){Format-Size $sobrUsed}else{''});free=(if($cnt -gt $missingFree){Format-Size $sobrFree}else{''});used_pct=$pct};missing_total_count=$missingTotal;missing_used_count=$missingUsed;missing_free_count=$missingFree})
+    [void]$capTotals.Add([pscustomobject][ordered]@{sobr_name=$sobrName;extent_count=$cnt;space=[ordered]@{total=$(if($sobrTotal -gt 0){Format-Size $sobrTotal}else{''});used=$(if($cnt -gt $missingUsed){Format-Size $sobrUsed}else{''});free=$(if($cnt -gt $missingFree){Format-Size $sobrFree}else{''});used_pct=$pct};missing_total_count=$missingTotal;missing_used_count=$missingUsed;missing_free_count=$missingFree})
 }
 $inventory.DefinedRepositories=@($repoRows | Select-Object -First 500)
 $inventory.CapacityTierUtilisation=[ordered]@{ schema_version='capacity-tier-utilisation-v1'; row_count=@($capRows).Count; rows=@($capRows | Select-Object -First 500); totals_by_sobr=@($capTotals); errors=@() }
@@ -538,55 +538,11 @@ if($inventory.TextReportPath){ Write-Host "Text report written to: $($inventory.
 <script>
 (function(){
 'use strict';
-const APP_VERSION='0.7.0';
-const SAMPLE=`====================================================================================================
-Job:  Generic_Primary_Backup
-Type: Backup
-====================================================================================================
-Repository : Primary_Repo_A
-Retention  : 14 restore points
-Schedule   : Active=True; Mode=Daily; Start=2026-08-01 22:00:00; RetryTimes=3; RetryTimeout=10; ResumeMissed=False; WaitForCompletion=True
-
-GFS:
-  Weekly  : IsEnabled=True; Weeks=4
-  Monthly : IsEnabled=True; Months=3
-  Yearly  : none
-
-Tags:
-  - Production
-
-Includes:
-  + Workload-A
-
-Excludes:
-  - none
-
-====================================================================================================
-Job:  Generic_Secondary_Copy
-Type: BackupSync
-====================================================================================================
-Repository : Capacity_Repo_B
-Retention  : 30 days
-Schedule   : Active=True; Mode=Periodically; Start=2026-08-01 01:00:00; RetryTimes=2; RetryTimeout=15; ResumeMissed=True; WaitForCompletion=False
-
-GFS:
-  Weekly  : none
-  Monthly : none
-  Yearly  : none
-
-Tags:
-  - none
-
-Includes:
-  + Workload-B
-
-Excludes:
-  - Scope/Test
-`;
+const APP_VERSION='0.7.1';
 const els={
   input:document.getElementById('input'),search:document.getElementById('search'),jobs:document.getElementById('jobs'),
   statJobs:document.getElementById('statJobs'),statGfs:document.getElementById('statGfs'),statActive:document.getElementById('statActive'),topRepos:document.getElementById('topRepos'),
-  fileInput:document.getElementById('fileInput'),downloadCmd:document.getElementById('downloadCmd'),downloadDocx:document.getElementById('downloadDocx'),loadSample:document.getElementById('loadSample'),copyRaw:document.getElementById('copyRaw'),clearAll:document.getElementById('clearAll'),
+  fileInput:document.getElementById('fileInput'),downloadCmd:document.getElementById('downloadCmd'),downloadDocx:document.getElementById('downloadDocx'),copyRaw:document.getElementById('copyRaw'),clearAll:document.getElementById('clearAll'),
   customerName:document.getElementById('customerName'),serverName:document.getElementById('serverName'),jobFilter:document.getElementById('jobFilter'),auditDays:document.getElementById('auditDays'),skipAudit:document.getElementById('skipAudit'),outputDir:document.getElementById('outputDir'),outputFile:document.getElementById('outputFile'),textFile:document.getElementById('textFile'),cmdStatus:document.getElementById('cmdStatus'),parseStatus:document.getElementById('parseStatus'),overviewStats:document.getElementById('overviewStats'),sectionFilter:document.getElementById('sectionFilter'),sectionDiagnostics:document.getElementById('sectionDiagnostics')
 };
 let parsedJobs=[];
@@ -802,8 +758,8 @@ function concat(arrays){const len=arrays.reduce((a,b)=>a+b.length,0),out=new Uin
 function zipStore(entries){const enc=new TextEncoder(),locals=[],centrals=[];let offset=0;for(const [name,text] of entries){const nb=enc.encode(name),data=enc.encode(text),crc=crc32(data),flags=0x0800;const local=concat([new Uint8Array([0x50,0x4b,0x03,0x04]),new Uint8Array(u16(20)),new Uint8Array(u16(flags)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u32(crc)),new Uint8Array(u32(data.length)),new Uint8Array(u32(data.length)),new Uint8Array(u16(nb.length)),new Uint8Array(u16(0)),nb,data]);locals.push(local);const central=concat([new Uint8Array([0x50,0x4b,0x01,0x02]),new Uint8Array(u16(20)),new Uint8Array(u16(20)),new Uint8Array(u16(flags)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u32(crc)),new Uint8Array(u32(data.length)),new Uint8Array(u32(data.length)),new Uint8Array(u16(nb.length)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u32(0)),new Uint8Array(u32(offset)),nb]);centrals.push(central);offset+=local.length;}const cd=concat(centrals),body=concat(locals),end=concat([new Uint8Array([0x50,0x4b,0x05,0x06]),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(entries.length)),new Uint8Array(u16(entries.length)),new Uint8Array(u32(cd.length)),new Uint8Array(u32(body.length)),new Uint8Array(u16(0))]);return concat([body,cd,end]);}
 function generateDocx(){const entries=[['[Content_Types].xml',contentTypesXml()],['_rels/.rels',relsXml()],['docProps/core.xml',coreXml()],['docProps/app.xml',appXml()],['word/document.xml',documentXml()],['word/styles.xml',stylesXml()],['word/_rels/document.xml.rels',docRelsXml()],['word/header1.xml',headerXml()],['word/footer1.xml',footerXml()]];return new Blob([zipStore(entries)],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});}
 function downloadDocx(){if(!parsedJobs.length&&!importedData)return;const cfg=readConfig(),date=new Date().toISOString().slice(0,10).replace(/-/g,'');downloadBlob(generateDocx(),'Veeam_Combined_Report_'+safeLabel(cfg.customerName||'Customer','Customer')+'_'+date+'.docx');}
-els.input.addEventListener('input',refresh);els.search.addEventListener('input',()=>renderJobs(parsedJobs,els.search.value));els.sectionFilter.addEventListener('input',()=>renderOverview(importedData,els.sectionFilter.value));els.downloadCmd.addEventListener('click',downloadCmd);els.downloadDocx.addEventListener('click',downloadDocx);els.loadSample.addEventListener('click',()=>{els.input.value=SAMPLE;refresh();});els.clearAll.addEventListener('click',()=>{els.input.value='';els.search.value='';els.fileInput.value='';refresh();});els.copyRaw.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(els.input.value||'');showStatus(els.parseStatus,'Raw output copied.',true);}catch(err){window.prompt('Copy raw output:',els.input.value||'');}});els.fileInput.addEventListener('change',()=>{const f=els.fileInput.files&&els.fileInput.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{els.input.value=String(r.result||'');refresh();};r.onerror=()=>showStatus(els.parseStatus,'Could not read file: '+(r.error&&r.error.message?r.error.message:'unknown error'),false);r.readAsText(f);});
-els.input.value=SAMPLE;refresh();
+els.input.addEventListener('input',refresh);els.search.addEventListener('input',()=>renderJobs(parsedJobs,els.search.value));els.sectionFilter.addEventListener('input',()=>renderOverview(importedData,els.sectionFilter.value));els.downloadCmd.addEventListener('click',downloadCmd);els.downloadDocx.addEventListener('click',downloadDocx);els.clearAll.addEventListener('click',()=>{els.input.value='';els.search.value='';els.fileInput.value='';refresh();});els.copyRaw.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(els.input.value||'');showStatus(els.parseStatus,'Raw output copied.',true);}catch(err){window.prompt('Copy raw output:',els.input.value||'');}});els.fileInput.addEventListener('change',()=>{const f=els.fileInput.files&&els.fileInput.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{els.input.value=String(r.result||'');refresh();};r.onerror=()=>showStatus(els.parseStatus,'Could not read file: '+(r.error&&r.error.message?r.error.message:'unknown error'),false);r.readAsText(f);});
+els.input.value='';refresh();
 })();
 </script>
 </body>
