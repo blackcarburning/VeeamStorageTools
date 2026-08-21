@@ -50,7 +50,7 @@ button:hover{border-color:rgba(96,165,250,.55);background:rgba(96,165,250,.12)}b
     <h1>Veeam Job Report Builder (VBR v13)</h1>
     <p class="sub">Generate a VBR v13-compatible read-only collector CMD, import JSON/text output, review expanded infrastructure/security/storage inventory, and create the DOCX report locally in the browser.</p>
   </div>
-  <div class="version">v0.7.4</div>
+  <div class="version">v0.7.5</div>
 </header>
 <main>
   <aside class="panel">
@@ -131,9 +131,22 @@ function Initialize-VeeamPowerShell {
 function Test-CmdletExists { param([string]$Name) [bool](Get-Command -Name $Name -ErrorAction SilentlyContinue) }
 function Get-Prop { param($Obj,[string[]]$Names) foreach($n in $Names){ if($Obj -and ($Obj.PSObject.Properties.Name -contains $n)){ $v=$Obj.$n; if($null -ne $v -and "$v".Trim().Length -gt 0){ return $v } } } $null }
 function Get-ObjectIdValue { param($Obj) Get-Prop $Obj @('Id','Uid','ObjectId','BackupId','PolicyId') }
-function To-Array($x){ if($null -eq $x){@()} elseif($x -is [array]){$x} else {@($x)} }
+function To-Array($x){
+    if($null -eq $x){ return @() }
+    if($x -is [array]){ return $x }
+    if($x -is [string] -or $x -is [System.Collections.IDictionary]){ return ,$x }
+    if($x -is [System.Collections.IEnumerable]){
+        if($x.PSObject.Methods.Name -contains 'ToArray'){
+            try{ return [object[]]$x.ToArray() }catch{}
+        }
+        $items=New-Object System.Collections.Generic.List[object]
+        foreach($item in $x){ [void]$items.Add($item) }
+        return $items.ToArray()
+    }
+    return ,$x
+}
 function Select-RecentRows {
-    param([object[]]$Rows,[int]$Days=90,[int]$Limit=300,[string[]]$DateProps=@('CreationTime','CreationTimeUTC','EndTime','StartTime'))
+    param($Rows,[int]$Days=90,[int]$Limit=300,[string[]]$DateProps=@('CreationTime','CreationTimeUTC','EndTime','StartTime'))
     $cutoff=(Get-Date).AddDays(-1*[math]::Abs($Days))
     $filtered = foreach($r in (To-Array $Rows)){
         $keep=$false
@@ -144,7 +157,7 @@ function Select-RecentRows {
     }
     @(To-Array $filtered | Sort-Object { Get-Prop $_ $DateProps } -Descending | Select-Object -First $Limit)
 }
-function Get-FlatData { param([object[]]$Data)
+function Get-FlatData { param($Data)
     @(To-Array $Data | ForEach-Object {
         $o=[ordered]@{}
         foreach($p in $_.PSObject.Properties){
@@ -261,7 +274,7 @@ function Get-JobConfigRows { param([object[]]$Jobs)
         }
     })
 }
-function Write-TextReport { param([object[]]$JobRows,[string]$Path)
+function Write-TextReport { param($JobRows,[string]$Path)
     $lines = New-Object System.Collections.Generic.List[string]
     foreach($j in (To-Array $JobRows)){
         $lines.Add('====================================================================================================')
@@ -291,7 +304,7 @@ function Write-TextReport { param([object[]]$JobRows,[string]$Path)
 
 Initialize-VeeamPowerShell
 $schema='veeam-report-schema-v13.1.0'
-$collectorVersion='0.7.4'
+$collectorVersion='0.7.5'
 $sectionDiagnostics=New-Object System.Collections.Generic.List[object]
 
 $session=$null; try{$session=Get-VBRServerSession -ErrorAction SilentlyContinue}catch{}
@@ -353,7 +366,7 @@ if(Test-CmdletExists 'Get-VBRComputerBackupJob'){
                     [void]$objs.Add([pscustomobject]@{JobName=(Get-Prop $cbj @('Name'));ObjectName=(Get-Prop $o @('Name','ObjectName','DisplayName'));ObjectType=(Get-Prop $o @('Type','ObjectType'));Path=(Get-Prop $o @('Path'))})
                 }
             }
-            $inventory.ComputerBackupJobObjects=@($objs)
+            $inventory.ComputerBackupJobObjects=$objs.ToArray()
         }catch{$inventory.Warnings+="ComputerBackupJobObjects: $($_.Exception.Message)"}
     }
 }
@@ -370,8 +383,8 @@ if(Test-CmdletExists 'Get-VBRTapeServer'){
                 [void]$ti.Add([pscustomobject]@{SourceCmdlet=$cmd;Name=(Get-Prop $item @('Name','LibraryName','DriveName'));Type=(Get-Prop $item @('Type'));Status=(Get-Prop $item @('Status','State'))})
             }
         }
-        $inventory.TapeInfrastructure=@($ti)
-        $inventory.ReferenceIndex.TapeEntities=@($ti|ForEach-Object{[pscustomobject]@{Name=$_.Name;Type=$_.Type;Source=$_.SourceCmdlet}})
+        $inventory.TapeInfrastructure=$ti.ToArray()
+        $inventory.ReferenceIndex.TapeEntities=@($ti.ToArray()|ForEach-Object{[pscustomobject]@{Name=$_.Name;Type=$_.Type;Source=$_.SourceCmdlet}})
     }catch{$inventory.Warnings+="TapeInfrastructure: $($_.Exception.Message)"}
 }
 if(Test-CmdletExists 'Get-VBRTapeMedium'){ try{$inventory.TapeMedia=Get-FlatData (@(Get-VBRTapeMedium -WarningAction SilentlyContinue | Select-Object -First 300))}catch{$inventory.Warnings+="TapeMedia: $($_.Exception.Message)"} }
@@ -398,7 +411,7 @@ if(Test-CmdletExists 'Get-VBRTaskSession'){
                 $inventory.Warnings += "RecentTaskSessions[$(Get-Prop $bs @('Name','JobName','Id'))]: $($_.Exception.Message)"
             }
         }
-        $inventory.RecentTaskSessions=Get-FlatData (Select-RecentRows -Rows @($taskRows) -Days $AuditDays -Limit 500 -DateProps @('CreationTimeUTC','CreationTime','EndTime'))
+        $inventory.RecentTaskSessions=Get-FlatData (Select-RecentRows -Rows $taskRows.ToArray() -Days $AuditDays -Limit 500 -DateProps @('CreationTimeUTC','CreationTime','EndTime'))
     }catch{$inventory.Warnings+="RecentTaskSessions: $($_.Exception.Message)"}
 }
 if(Test-CmdletExists 'Get-VBRBackup'){
@@ -427,7 +440,7 @@ if(Test-CmdletExists 'Get-VBRBackup'){
                     if($rpRows.Count -ge 800){ break }
                 }
             }
-            $inventory.RestorePointInventory=Get-FlatData (@($rpRows | Select-Object -First 500))
+            $inventory.RestorePointInventory=Get-FlatData (@($rpRows.ToArray() | Select-Object -First 500))
             $inventory.BackupVersions=@($versionMap.Values | Sort-Object Machine,JobName | Select-Object -First 500)
         }
     }catch{$inventory.Warnings+="RestorePointInventory: $($_.Exception.Message)"}
@@ -479,12 +492,12 @@ foreach($sobr in (To-Array $sobrs | Select-Object -First 60)){
     $capTotalSpace=[ordered]@{ total=$sobrTotalText; used=$sobrUsedText; free=$sobrFreeText; used_pct=[string]$pct }
     [void]$capTotals.Add([pscustomobject][ordered]@{sobr_name=$sobrName;extent_count=$cnt;space=$capTotalSpace;missing_total_count=$missingTotal;missing_used_count=$missingUsed;missing_free_count=$missingFree})
 }
-$inventory.DefinedRepositories=@($repoRows | Select-Object -First 500)
-$capRowsArr = @($capRows | Select-Object -First 500)
-$capTotalsArr = @($capTotals)
+$inventory.DefinedRepositories=@($repoRows.ToArray() | Select-Object -First 500)
+$capRowsArr = @($capRows.ToArray() | Select-Object -First 500)
+$capTotalsArr = $capTotals.ToArray()
 $capacityTierUtilisation = [ordered]@{}
 $capacityTierUtilisation['schema_version'] = 'capacity-tier-utilisation-v1'
-$capacityTierUtilisation['row_count'] = [int]@($capRows).Count
+$capacityTierUtilisation['row_count'] = [int]$capRows.Count
 $capacityTierUtilisation['rows'] = [object[]]$capRowsArr
 $capacityTierUtilisation['totals_by_sobr'] = [object[]]$capTotalsArr
 $capacityTierUtilisation['errors'] = @()
@@ -553,7 +566,7 @@ $inventory.AvailableVeeamCmdlets = Get-FlatData (@($availableCmdlets | Sort-Obje
 [void]$sectionDiagnostics.Add((New-SectionDiagnostic -Section 'Security' -SourceCmdlets @('Get-VBRMalwareDetectionEvent','Get-VBRMalwareDetectionObject','Get-VBRSecurityComplianceAnalyzerResult','Get-VBRCertificate','Get-VBRSyslogServer','Get-VBREventForwardingSettings','Get-VBREncryptionKey','Get-VBRSAMLAuthenticationSettings','Get-VBRServerCertificate') -Status 'ok' -ItemCount (@($inventory.MalwareDetectionEvents).Count + @($inventory.MalwareDetectionObjects).Count + @($inventory.SecurityCompliance).Count + @($inventory.CertificateMetadata).Count + @($inventory.SyslogServers).Count + @($inventory.EventForwardingSettings).Count + @($inventory.EncryptionKeyMetadata).Count + @($inventory.SAMLAuthenticationSettings).Count)))
 [void]$sectionDiagnostics.Add((New-SectionDiagnostic -Section 'InfrastructureExtras' -SourceCmdlets @('Get-VBRCacheRepository','Get-VBRNASBackupJob','Get-VBRUnstructuredServer','Get-VBRCloudGateway','Get-VBRLocation','Get-VBRGlobalNetworkTrafficRule','Get-VBRConfigurationBackupJob') -Status 'ok' -ItemCount (@($inventory.CacheRepositories).Count + @($inventory.NASBackupJobs).Count + @($inventory.UnstructuredServers).Count + @($inventory.CloudGateways).Count + @($inventory.Locations).Count + @($inventory.GlobalNetworkTrafficRules).Count + @($inventory.ConfigurationBackupJobs).Count)))
 [void]$sectionDiagnostics.Add((New-SectionDiagnostic -Section 'TapeInfrastructure' -SourceCmdlets @('Get-VBRTapeServer','Get-VBRTapeLibrary','Get-VBRTapeDrive','Get-VBRTapeMediaPool','Get-VBRTapeMedium','Get-VBRTapeVault') -Status $(if(Test-CmdletExists 'Get-VBRTapeServer'){'ok'}else{'skipped'}) -ItemCount (@($inventory.TapeInfrastructure).Count + @($inventory.TapeMedia).Count + @($inventory.TapeVaults).Count)))
-$inventory.SectionDiagnostics=@($sectionDiagnostics)
+$inventory.SectionDiagnostics=$sectionDiagnostics.ToArray()
 $inventory.TextReportPath = Write-TextReport -JobRows $inventory.JobConfiguration -Path $TextOutputFile
 
 $json=$inventory | ConvertTo-Json -Depth 16
@@ -565,7 +578,7 @@ if($inventory.TextReportPath){ Write-Host "Text report written to: $($inventory.
 <script>
 (function(){
 'use strict';
-const APP_VERSION='0.7.4';
+const APP_VERSION='0.7.5';
 const els={
   input:document.getElementById('input'),search:document.getElementById('search'),jobs:document.getElementById('jobs'),
   statJobs:document.getElementById('statJobs'),statGfs:document.getElementById('statGfs'),statActive:document.getElementById('statActive'),topRepos:document.getElementById('topRepos'),
