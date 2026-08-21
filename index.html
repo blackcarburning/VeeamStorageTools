@@ -50,7 +50,7 @@ button:hover{border-color:rgba(96,165,250,.55);background:rgba(96,165,250,.12)}b
     <h1>Veeam Job Report Builder (VBR v13)</h1>
     <p class="sub">Generate a VBR v13-compatible read-only collector CMD, import JSON/text output, review expanded infrastructure/security/storage inventory, and create the DOCX report locally in the browser.</p>
   </div>
-  <div class="version">v0.7.2</div>
+  <div class="version">v0.7.3</div>
 </header>
 <main>
   <aside class="panel">
@@ -291,7 +291,7 @@ function Write-TextReport { param([object[]]$JobRows,[string]$Path)
 
 Initialize-VeeamPowerShell
 $schema='veeam-report-schema-v13.1.0'
-$collectorVersion='0.7.2'
+$collectorVersion='0.7.3'
 $sectionDiagnostics=New-Object System.Collections.Generic.List[object]
 
 $session=$null; try{$session=Get-VBRServerSession -ErrorAction SilentlyContinue}catch{}
@@ -304,7 +304,7 @@ if(@($v130Cmdlets).Count -eq 0){ $v130FallbackUsed=$true; $v130Cmdlets = @($avai
 $inventory=[ordered]@{
     Metadata=[ordered]@{
         SchemaVersion=$schema; CollectorVersion=$collectorVersion; GeneratedAt=(Get-Date).ToString('o'); TargetServer=$Server; Hostname=$env:COMPUTERNAME; User="$env:USERDOMAIN\$env:USERNAME";
-        PSVersion=$PSVersionTable.PSVersion.ToString(); RuntimeRequirement='Windows PowerShell 5.1 preferred in VBR console; PowerShell 7 optional if module is available'; JobNameFilter=$JobName; AuditDays=[math]::Abs($AuditDays);
+        PSVersion=$PSVersionTable.PSVersion.ToString(); RuntimeRequirement='PowerShell 7 (pwsh.exe) required by launcher'; JobNameFilter=$JobName; AuditDays=[math]::Abs($AuditDays);
         CompatibilityStatus='Best effort by cmdlet availability, edition, licensing, and workload support.'; V130FallbackUsed=$v130FallbackUsed
     }
     Compatibility=[ordered]@{ VBRServerSessionConnected=[bool](Get-VBRServerSession -ErrorAction SilentlyContinue); PowerShellEdition=$PSVersionTable.PSEdition; AvailableVeeamCmdletsCount=@($availableCmdlets).Count; V130CommandCount=@($v130Cmdlets).Count; V130FallbackUsed=$v130FallbackUsed }
@@ -480,7 +480,14 @@ foreach($sobr in (To-Array $sobrs | Select-Object -First 60)){
     [void]$capTotals.Add([pscustomobject][ordered]@{sobr_name=$sobrName;extent_count=$cnt;space=$capTotalSpace;missing_total_count=$missingTotal;missing_used_count=$missingUsed;missing_free_count=$missingFree})
 }
 $inventory.DefinedRepositories=@($repoRows | Select-Object -First 500)
-$capacityTierUtilisation=[ordered]@{ schema_version='capacity-tier-utilisation-v1'; row_count=@($capRows).Count; rows=@($capRows | Select-Object -First 500); totals_by_sobr=@($capTotals); errors=@() }
+$capRowsArr = @($capRows | Select-Object -First 500)
+$capTotalsArr = @($capTotals)
+$capacityTierUtilisation = [ordered]@{}
+$capacityTierUtilisation['schema_version'] = 'capacity-tier-utilisation-v1'
+$capacityTierUtilisation['row_count'] = [int]@($capRows).Count
+$capacityTierUtilisation['rows'] = [object[]]$capRowsArr
+$capacityTierUtilisation['totals_by_sobr'] = [object[]]$capTotalsArr
+$capacityTierUtilisation['errors'] = @()
 $inventory.CapacityTierUtilisation=$capacityTierUtilisation
 
 if(Test-CmdletExists 'Get-VBRInstalledLicense'){
@@ -558,7 +565,7 @@ if($inventory.TextReportPath){ Write-Host "Text report written to: $($inventory.
 <script>
 (function(){
 'use strict';
-const APP_VERSION='0.7.2';
+const APP_VERSION='0.7.3';
 const els={
   input:document.getElementById('input'),search:document.getElementById('search'),jobs:document.getElementById('jobs'),
   statJobs:document.getElementById('statJobs'),statGfs:document.getElementById('statGfs'),statActive:document.getElementById('statActive'),topRepos:document.getElementById('topRepos'),
@@ -591,10 +598,20 @@ if not exist "%OUT_DIR%" mkdir "%OUT_DIR%"
 set "COLLECTOR=%OUT_DIR%\\veeam_combined_collector.ps1"
 set "JSON_REPORT=%OUT_DIR%\\%JSON_FILE%"
 set "TEXT_REPORT=%OUT_DIR%\\%TEXT_FILE%"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $self='%~f0'; $dest='${psSingle(cfg.outputDir)}\\veeam_combined_collector.ps1'; $raw=[IO.File]::ReadAllText($self); $m=[regex]::Match($raw,'(?s)###BEGIN_COLLECTOR###\\r?\\n(.*?)\\r?\\n###END_COLLECTOR###'); if(-not $m.Success){throw 'Collector block not found in CMD'}; [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($dest)) | Out-Null; [IO.File]::WriteAllText($dest,$m.Groups[1].Value,(New-Object System.Text.UTF8Encoding($false)))"
+set "PSEXE="
+for /f "delims=" %%I in ('where pwsh.exe 2^>nul') do if not defined PSEXE set "PSEXE=%%~fI"
+if not defined PSEXE if defined ProgramFiles if exist "%ProgramFiles%\PowerShell\7\pwsh.exe" set "PSEXE=%ProgramFiles%\PowerShell\7\pwsh.exe"
+if not defined PSEXE if defined ProgramW6432 if exist "%ProgramW6432%\PowerShell\7\pwsh.exe" set "PSEXE=%ProgramW6432%\PowerShell\7\pwsh.exe"
+if not defined PSEXE if defined ProgramFiles(x86) if exist "%ProgramFiles(x86)%\PowerShell\7\pwsh.exe" set "PSEXE=%ProgramFiles(x86)%\PowerShell\7\pwsh.exe"
+if not defined PSEXE if defined LOCALAPPDATA if exist "%LOCALAPPDATA%\Microsoft\PowerShell\7\pwsh.exe" set "PSEXE=%LOCALAPPDATA%\Microsoft\PowerShell\7\pwsh.exe"
+if not defined PSEXE if defined ProgramFiles if exist "%ProgramFiles%\PowerShell\7-preview\pwsh.exe" set "PSEXE=%ProgramFiles%\PowerShell\7-preview\pwsh.exe"
+if not defined PSEXE (
+  echo [FATAL] PowerShell 7 (pwsh.exe) was not found. Install PowerShell 7 and re-run.
+  goto :fail
+)
+echo Using PowerShell 7 engine: "%PSEXE%"
+"%PSEXE%" -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $self='%~f0'; $dest='${psSingle(cfg.outputDir)}\\veeam_combined_collector.ps1'; $raw=[IO.File]::ReadAllText($self); $m=[regex]::Match($raw,'(?s)###BEGIN_COLLECTOR###\\r?\\n(.*?)\\r?\\n###END_COLLECTOR###'); if(-not $m.Success){throw 'Collector block not found in CMD'}; [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($dest)) | Out-Null; [IO.File]::WriteAllText($dest,$m.Groups[1].Value,(New-Object System.Text.UTF8Encoding($false)))"
 if errorlevel 1 goto :fail
-where pwsh.exe >nul 2>nul
-if errorlevel 1 (set "PSEXE=powershell.exe") else (set "PSEXE=pwsh.exe")
 echo Running combined Veeam collector...
 echo JSON output: "%JSON_REPORT%"
 echo Text output: "%TEXT_REPORT%"
