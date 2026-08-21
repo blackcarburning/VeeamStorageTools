@@ -456,11 +456,15 @@ foreach($sobr in (To-Array $sobrs | Select-Object -First 60)){
             $ceName=(Get-Prop $ce @('Name','DisplayName')); if(-not $ceName){$ceName=(Get-Prop $ce @('RepositoryName'))}
             $path=(Get-Prop $ce @('Folder','Path','BucketName','ContainerName','AccountName'))
             [void]$repoRows.Add([pscustomobject]@{Repository=$ceName;Tier='Capacity';Parent=$sobrName;Status=(Get-Prop $ce @('State','Status'));Total=$snap.total;Used=$snap.used;Free=$snap.free;UsedPct=$snap.used_pct;Location=$path})
+            $capRowTotalText=''; if($null -ne $snap.total){ $capRowTotalText=[string]$snap.total }
+            $capRowUsedText=''; if($null -ne $snap.used){ $capRowUsedText=[string]$snap.used }
+            $capRowFreeText=''; if($null -ne $snap.free){ $capRowFreeText=[string]$snap.free }
+            $capRowUsedPctText=''; if($null -ne $snap.used_pct){ $capRowUsedPctText=[string]$snap.used_pct }
             $capRowSpace=[ordered]@{
-                total=[string](if($null -ne $snap.total){$snap.total}else{''})
-                used=[string](if($null -ne $snap.used){$snap.used}else{''})
-                free=[string](if($null -ne $snap.free){$snap.free}else{''})
-                used_pct=[string](if($null -ne $snap.used_pct){$snap.used_pct}else{''})
+                total=$capRowTotalText
+                used=$capRowUsedText
+                free=$capRowFreeText
+                used_pct=$capRowUsedPctText
             }
             [void]$capRows.Add([pscustomobject][ordered]@{sobr_name=$sobrName;capacity_extent_name=$ceName;capacity_extent_status=(Get-Prop $ce @('State','Status'));object_storage_path=$path;space=$capRowSpace;source_cmdlet='Get-VBRCapacityExtent'})
             if($null -ne $snap.total_raw){try{$sobrTotal = [double]$sobrTotal + [double]$snap.total_raw}catch{$missingTotal++}}else{$missingTotal++}
