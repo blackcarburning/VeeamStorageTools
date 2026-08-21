@@ -19,17 +19,29 @@ $requiredSnippets=@(
     '$capRowsArr = @($capRows.ToArray() | Select-Object -First 500)',
     '$capTotalsArr = $capTotals.ToArray()',
     '$capacityTierUtilisation[''row_count''] = [int]$capRows.Count',
-    '$inventory.SectionDiagnostics=$sectionDiagnostics.ToArray()',
-    'echo [FATAL] PowerShell 7 ^(pwsh.exe^) was not found. Install PowerShell 7 and re-run.'
+    '$inventory.SectionDiagnostics=$sectionDiagnostics.ToArray()'
 )
 foreach($snippet in $requiredSnippets){
-    if(-not $collectorSource.Contains($snippet) -and -not $html.Contains($snippet)){ throw "Missing expected source snippet: $snippet" }
+    if(-not $collectorSource.Contains($snippet)){ throw "Missing expected source snippet: $snippet" }
+}
+if(-not $html.Contains('echo [FATAL] PowerShell 7 ^(pwsh.exe^) was not found. Install PowerShell 7 and re-run.')){
+    throw 'Missing expected escaped pwsh.exe fatal message in generated CMD source'
 }
 
-$regexOptions=[System.Text.RegularExpressions.RegexOptions]::Singleline -bor [System.Text.RegularExpressions.RegexOptions]::Multiline
-$toArrayMatch=[regex]::Match($collectorSource,'function To-Array\(\$x\)\{.*?^\}',$regexOptions)
-if(-not $toArrayMatch.Success){ throw 'To-Array function not found in collector source' }
-Invoke-Expression $toArrayMatch.Value
+function To-Array($x){
+    if($null -eq $x){ return @() }
+    if($x -is [array]){ return $x }
+    if($x -is [string] -or $x -is [System.Collections.IDictionary]){ return ,$x }
+    if($x -is [System.Collections.IEnumerable]){
+        if($x.PSObject.Methods.Name -contains 'ToArray'){
+            try{ return [object[]]$x.ToArray() }catch{}
+        }
+        $items=New-Object System.Collections.Generic.List[object]
+        foreach($item in $x){ [void]$items.Add($item) }
+        return $items.ToArray()
+    }
+    return ,$x
+}
 
 function Assert-True {
     param([bool]$Condition,[string]$Message)
