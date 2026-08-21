@@ -2,7 +2,7 @@
 
 Self-contained offline browser tool for Veeam Backup & Replication reporting.
 
-Current version: `0.6.0` (VBR v13 focused)
+Current version: `0.7.5` (VBR v13 focused)
 
 ## What changed for VBR v13
 
