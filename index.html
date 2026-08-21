@@ -50,7 +50,7 @@ button:hover{border-color:rgba(96,165,250,.55);background:rgba(96,165,250,.12)}b
     <h1>Veeam Job Report Builder (VBR v13)</h1>
     <p class="sub">Generate a VBR v13-compatible read-only collector CMD, import JSON/text output, review expanded infrastructure/security/storage inventory, and create the DOCX report locally in the browser.</p>
   </div>
-  <div class="version">v0.7.3</div>
+  <div class="version">v0.7.4</div>
 </header>
 <main>
   <aside class="panel">
@@ -291,7 +291,7 @@ function Write-TextReport { param([object[]]$JobRows,[string]$Path)
 
 Initialize-VeeamPowerShell
 $schema='veeam-report-schema-v13.1.0'
-$collectorVersion='0.7.3'
+$collectorVersion='0.7.4'
 $sectionDiagnostics=New-Object System.Collections.Generic.List[object]
 
 $session=$null; try{$session=Get-VBRServerSession -ErrorAction SilentlyContinue}catch{}
@@ -565,7 +565,7 @@ if($inventory.TextReportPath){ Write-Host "Text report written to: $($inventory.
 <script>
 (function(){
 'use strict';
-const APP_VERSION='0.7.3';
+const APP_VERSION='0.7.4';
 const els={
   input:document.getElementById('input'),search:document.getElementById('search'),jobs:document.getElementById('jobs'),
   statJobs:document.getElementById('statJobs'),statGfs:document.getElementById('statGfs'),statActive:document.getElementById('statActive'),topRepos:document.getElementById('topRepos'),
@@ -601,11 +601,11 @@ set "TEXT_REPORT=%OUT_DIR%\\%TEXT_FILE%"
 set "PF86=%ProgramFiles(x86)%"
 set "PSEXE="
 for /f "delims=" %%I in ('where pwsh.exe 2^>nul') do if not defined PSEXE set "PSEXE=%%~fI"
-if not defined PSEXE if defined ProgramFiles if exist "%ProgramFiles%\PowerShell\7\pwsh.exe" set "PSEXE=%ProgramFiles%\PowerShell\7\pwsh.exe"
-if not defined PSEXE if defined ProgramW6432 if exist "%ProgramW6432%\PowerShell\7\pwsh.exe" set "PSEXE=%ProgramW6432%\PowerShell\7\pwsh.exe"
-if not defined PSEXE if defined PF86 if exist "%PF86%\PowerShell\7\pwsh.exe" set "PSEXE=%PF86%\PowerShell\7\pwsh.exe"
-if not defined PSEXE if defined LOCALAPPDATA if exist "%LOCALAPPDATA%\Microsoft\PowerShell\7\pwsh.exe" set "PSEXE=%LOCALAPPDATA%\Microsoft\PowerShell\7\pwsh.exe"
-if not defined PSEXE if defined ProgramFiles if exist "%ProgramFiles%\PowerShell\7-preview\pwsh.exe" set "PSEXE=%ProgramFiles%\PowerShell\7-preview\pwsh.exe"
+if not defined PSEXE if defined ProgramFiles if exist "%ProgramFiles%\\PowerShell\\7\\pwsh.exe" set "PSEXE=%ProgramFiles%\\PowerShell\\7\\pwsh.exe"
+if not defined PSEXE if defined ProgramW6432 if exist "%ProgramW6432%\\PowerShell\\7\\pwsh.exe" set "PSEXE=%ProgramW6432%\\PowerShell\\7\\pwsh.exe"
+if not defined PSEXE if defined PF86 if exist "%PF86%\\PowerShell\\7\\pwsh.exe" set "PSEXE=%PF86%\\PowerShell\\7\\pwsh.exe"
+if not defined PSEXE if defined LOCALAPPDATA if exist "%LOCALAPPDATA%\\Microsoft\\PowerShell\\7\\pwsh.exe" set "PSEXE=%LOCALAPPDATA%\\Microsoft\\PowerShell\\7\\pwsh.exe"
+if not defined PSEXE if defined ProgramFiles if exist "%ProgramFiles%\\PowerShell\\7-preview\\pwsh.exe" set "PSEXE=%ProgramFiles%\\PowerShell\\7-preview\\pwsh.exe"
 if not defined PSEXE (
   echo [FATAL] PowerShell 7 (pwsh.exe) was not found. Install PowerShell 7 and re-run.
   goto :fail
